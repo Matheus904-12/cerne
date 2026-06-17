@@ -1,0 +1,46 @@
+name: Lembretes do Board
+
+on:
+  schedule:
+    # A cada 15 min. UTC. Ajuste se quiser menos frequente.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {} # permite rodar manualmente pelo botão "Run workflow"
+
+permissions:
+  contents: write # para commitar o tasks.json com o campo notificadoEm
+
+jobs:
+  notificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependências
+        working-directory: scripts
+        run: npm install --silent
+
+      - name: Verificar e enviar lembretes
+        working-directory: scripts
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node notify.mjs
+
+      - name: Commitar lembretes processados
+        run: |
+          if [ -n "$(git status --porcelain data/tasks.json)" ]; then
+            git config user.name "board-bot"
+            git config user.email "bot@board.local"
+            git add data/tasks.json
+            git commit -m "board: marca lembretes notificados"
+            git push
+          else
+            echo "Sem mudanças."
+          fi

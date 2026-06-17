@@ -1,0 +1,14 @@
+# dependências
+node_modules/
+
+# vercel
+.vercel/
+
+# segredos locais — NUNCA commitar
+.mcp.json
+.env
+*.local
+
+# sistema
+.DS_Store
+Thumbs.db

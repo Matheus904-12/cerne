@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "board": { "nome": "Publications", "atualizadoEm": "2026-06-16T00:00:00Z" },
+  "colunas": [
+    { "id": "todo", "nome": "To Do", "ordem": 0, "cor": "#8b93a7" },
+    { "id": "fazendo", "nome": "In Progress", "ordem": 1, "cor": "#e0a82e" },
+    { "id": "revisao", "nome": "Review", "ordem": 2, "cor": "#3b82f6" },
+    { "id": "feito", "nome": "Completed", "ordem": 3, "cor": "#22c55e" }
+  ],
+  "etiquetas": {
+    "Design": "#3b82f6",
+    "Marketing": "#a855f7",
+    "Development": "#22c55e",
+    "Content": "#ec4899",
+    "Improvement": "#f59e0b"
+  },
+  "pessoas": [
+    { "id": "me", "nome": "Você", "cor": "#2f6bff" },
+    { "id": "alex", "nome": "Alex Johnson", "cor": "#ef4444" },
+    { "id": "daniel", "nome": "Daniel Kim", "cor": "#14b8a6" },
+    { "id": "anna", "nome": "Anna Volkova", "cor": "#a855f7" }
+  ],
+  "tarefas": [
+    { "id": "t-0001", "titulo": "Mobile App Dashboard Redesign", "descricao": "Redesenhar a UI do dashboard mobile para melhorar usabilidade e clareza visual.", "coluna": "todo", "etiqueta": "Design", "prioridade": "media", "tags": [], "prazo": null, "lembrete": null, "assignees": ["me"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0002", "titulo": "Implement Dark Mode Feature", "descricao": "Desenvolver toggle de modo escuro para web e mobile.", "coluna": "todo", "etiqueta": "Development", "prioridade": "baixa", "tags": [], "prazo": null, "lembrete": null, "assignees": ["daniel"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0003", "titulo": "SEO Audit And Content Strategy", "descricao": "Auditar o site, achar lacunas de conteúdo e propor estratégia para subir tráfego orgânico em 20%.", "coluna": "todo", "etiqueta": "Marketing", "prioridade": "media", "tags": [], "prazo": null, "lembrete": null, "assignees": ["alex", "anna", "daniel"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0004", "titulo": "Influencer Outreach Campaign", "descricao": "Montar lista de 20 influenciadores relevantes e iniciar parcerias para o lançamento.", "coluna": "fazendo", "etiqueta": "Marketing", "prioridade": "alta", "tags": [], "prazo": "2026-06-16", "lembrete": null, "assignees": ["anna"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0005", "titulo": "Case Study: Client Success Story", "descricao": "Escrever um case detalhado mostrando como um cliente teve sucesso usando o produto. Incluir visuais e métricas.", "coluna": "fazendo", "etiqueta": "Content", "prioridade": "media", "tags": [], "prazo": "2026-09-30", "lembrete": null, "assignees": ["daniel"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0006", "titulo": "Database Migration To Cloud", "descricao": "Planejar e executar a migração do banco atual para a nuvem com downtime mínimo.", "coluna": "fazendo", "etiqueta": "Development", "prioridade": "alta", "tags": [], "prazo": "2026-09-01", "lembrete": null, "assignees": ["alex", "daniel", "anna"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0007", "titulo": "Project Healthcare App", "descricao": "Desenhar um app para ajudar pacientes e médicos a gerenciar consultas, prontuários e acompanhamento de saúde.", "coluna": "revisao", "etiqueta": "Design", "prioridade": "media", "tags": [], "prazo": "2026-10-04", "lembrete": null, "assignees": ["alex"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0008", "titulo": "Set Up Automated Testing Suite", "descricao": "Implementar testes automatizados e de integração para os módulos centrais. Cobertura acima de 80%.", "coluna": "revisao", "etiqueta": "Development", "prioridade": "media", "tags": [], "prazo": "2026-10-03", "lembrete": null, "assignees": ["daniel"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0009", "titulo": "Podcast Episode Script", "descricao": "Escrever o roteiro do episódio de podcast da empresa com um especialista do setor.", "coluna": "revisao", "etiqueta": "Content", "prioridade": "baixa", "tags": [], "prazo": "2026-10-05", "lembrete": null, "assignees": ["alex", "anna"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": false },
+    { "id": "t-0010", "titulo": "Optimize Image Compression", "descricao": "Auditar o front-end e implementar compressão e code splitting de imagens.", "coluna": "feito", "etiqueta": "Improvement", "prioridade": "media", "tags": [], "prazo": null, "lembrete": null, "assignees": ["alex"], "notaVinculada": null, "criadoEm": "2026-06-16T00:00:00Z", "atualizadoEm": "2026-06-16T00:00:00Z", "concluido": true }
+  ],
+  "atividade": [
+    { "id": "a1", "pessoa": "alex", "acao": "mudou o status de", "alvo": "Mobile App UI", "extra": "para In Progress", "hora": "18:00" },
+    { "id": "a2", "pessoa": "daniel", "acao": "atualizou a descrição de", "alvo": "User onboarding flow", "extra": "", "hora": "17:50" },
+    { "id": "a3", "pessoa": "system", "acao": "prazo de", "alvo": "Backend migration", "extra": "é amanhã", "hora": "14:30" },
+    { "id": "a4", "pessoa": "anna", "acao": "mencionou você num comentário em", "alvo": "Marketing strategy", "extra": "", "hora": "12:45" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "_comentario": "Copie para .mcp.json e preencha. .mcp.json é git-ignored (contém segredos).",
+  "mcpServers": {
+    "cerne": {
+      "command": "node",
+      "args": ["./mcp-server/index.mjs"],
+      "env": {
+        "REPO_ROOT": ".",
+        "OBSIDIAN_VAULT": "/caminho/para/sua/vault",
+        "NOTION_TOKEN": "preencha-localmente",
+        "NOTION_DB_ID": "preencha-localmente"
+      }
+    }
+  }
+}
