@@ -246,6 +246,8 @@ body{
   box-shadow:0 12px 28px -14px rgba(0,0,0,.7);
 }
 .card.dragging{opacity:.4;cursor:grabbing;transform:rotate(1.5deg)}
+.card.has-comments{border-color:rgba(47,107,255,.35);box-shadow:inset 3px 0 0 rgba(47,107,255,.55)}
+.card.has-comments:hover{border-color:rgba(47,107,255,.6);box-shadow:inset 3px 0 0 rgba(47,107,255,.8),0 12px 28px -14px rgba(0,0,0,.7)}
 .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .lbl{font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;letter-spacing:.01em}
 .due{font-size:11px;font-weight:500;color:var(--ink-3)}
@@ -273,6 +275,15 @@ body{
 }
 .card-acts span:hover{color:var(--ink);border-color:#2a313d}
 .card-acts svg{width:13px;height:13px}
+.card-acts .card-btn-comment.active{
+  color:var(--blue-hi);
+  border-color:rgba(47,107,255,.5);
+  background:rgba(47,107,255,.1);
+}
+.card-acts .card-btn-comment.active:hover{
+  border-color:rgba(47,107,255,.8);
+  background:rgba(47,107,255,.18);
+}
 .col-add{
   width:100%;text-align:left;font:inherit;font-size:13px;color:var(--ink-4);
   background:transparent;border:1px dashed var(--line);border-radius:10px;
@@ -421,6 +432,37 @@ body{
 .fi .tm{font-size:11px;color:var(--ink-4)}
 .fi .tx{font-size:11.5px;color:var(--ink-3);line-height:1.4;margin-top:2px}
 .fi .tx b{color:var(--blue-hi);font-weight:500}
+/* ── Comentários no painel de tarefa ──────────────── */
+.cm-item{
+  display:flex;gap:10px;padding:4px 0;
+  animation:cardIn .3s var(--ease) both;
+}
+.cm-item .cm-av{
+  width:32px;height:32px;border-radius:50%;flex:0 0 32px;
+  display:grid;place-items:center;font-size:11px;font-weight:700;
+  color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+.cm-item .cm-bubble{
+  flex:1;min-width:0;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:0 14px 14px 14px;
+  padding:10px 13px 9px;
+  position:relative;
+}
+.cm-item .cm-bubble::before{
+  content:'';position:absolute;top:10px;left:-7px;
+  width:0;height:0;
+  border-top:6px solid transparent;
+  border-bottom:6px solid transparent;
+  border-right:7px solid rgba(255,255,255,.07);
+}
+.cm-item .cm-head{
+  display:flex;align-items:baseline;gap:7px;margin-bottom:5px;
+}
+.cm-item .cm-name{font-size:12px;font-weight:700;color:var(--ink)}
+.cm-item .cm-time{font-size:10.5px;color:var(--ink-4);margin-left:auto;white-space:nowrap}
+.cm-item .cm-text{font-size:13px;color:var(--ink-2);line-height:1.55;word-break:break-word}
 .timer{
   margin:6px -16px 0;padding:14px 16px 16px;border-top:1px solid var(--line-soft);
   display:flex;align-items:center;gap:12px;
@@ -1330,7 +1372,8 @@ function cardHTML(t,i){
   const avs=(t.assignees||[]).slice(0,3).map(id=>{const p=person(id);return`<span class="av" style="background:${p.cor}">${initials(p.nome)}</span>`}).join('');
   const extra=(t.assignees||[]).length>3?`<span class="av" style="background:#222a36">+${t.assignees.length-3}</span>`:'';
   const addAv=!(t.assignees||[]).length?'<span class="av-add">+</span>':'';
-  return`<article class="card" draggable="true" data-id="${t.id}" style="animation-delay:${i*.04}s">
+  const hasComments=(t.comentarios||[]).length>0;
+  return`<article class="card${hasComments?' has-comments':''}" draggable="true" data-id="${t.id}" style="animation-delay:${i*.04}s">
     <div class="card-top">
       ${t.etiqueta?`<span class="lbl" style="color:${lc};background:${hex2rgba(lc,.14)}">${esc(t.etiqueta)}</span>`:'<span></span>'}
       ${due?`<span class="due ${soon?'soon':''}">${due}</span>`:''}
@@ -1340,7 +1383,7 @@ function cardHTML(t,i){
     <div class="card-foot">
       <div class="avatars">${avs}${extra}${addAv}</div>
       <div class="card-acts">
-        <span class="card-btn-comment" data-id="${t.id}" data-tip="Comentários (dir=sidebar)"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>${(t.comentarios||[]).length?`<sup style="font-size:9px;font-weight:700;color:var(--blue-hi);margin-left:1px">${(t.comentarios||[]).length}</sup>`:''}</span>
+        <span class="card-btn-comment${hasComments?' active':''}" data-id="${t.id}" data-tip="Comentários"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
         <span class="card-btn-anexo" data-id="${t.id}" data-tip="Anexos (${(t.anexos||[]).length})"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 12.5 12.5 21a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg></span>
         <span data-tip="${t.prazo?fmtDue(t.prazo):'Sem prazo'}"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>
       </div>
@@ -1712,18 +1755,25 @@ function openCommentModal(id){
 function renderCmList(t){
   const list=document.getElementById('cmList');
   const comments=(t.comentarios||[]).slice().sort((a,b)=>a.criadoEm<b.criadoEm?1:-1);
-  if(!comments.length){list.innerHTML=`<p style="font-size:13px;color:var(--ink-4);text-align:center;padding:20px 0">Nenhum comentário ainda.</p>`;return;}
-  list.innerHTML=comments.map(c=>{
+  if(!comments.length){
+    list.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:24px 0;color:var(--ink-4)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="30" height="30" style="opacity:.3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span style="font-size:13px">Nenhum comentário ainda</span>
+    </div>`;
+    return;
+  }
+  list.innerHTML=comments.map((c,i)=>{
     const p=person(c.pessoa||'me');
     const dt=new Date(c.criadoEm);
-    const ago=fmtAgo(dt);
-    return`<div class="comment-item">
-      <div class="comment-item-head">
-        <span class="av" style="width:24px;height:24px;border-radius:50%;background:${p.cor};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">${initials(p.nome)}</span>
-        <span class="nm">${esc(p.nome)}</span>
-        <span class="tm">${ago}</span>
+    return`<div class="cm-item" style="animation-delay:${i*.04}s">
+      <span class="cm-av" style="background:${p.cor}">${initials(p.nome)}</span>
+      <div class="cm-bubble">
+        <div class="cm-head">
+          <span class="cm-name">${esc(p.nome)}</span>
+          <span class="cm-time">${fmtAgo(dt)}</span>
+        </div>
+        <div class="cm-text">${esc(c.texto)}</div>
       </div>
-      <div class="comment-item-body">${esc(c.texto)}</div>
     </div>`;
   }).join('');
 }
@@ -1926,14 +1976,24 @@ function renderActHeat(t){
 function renderActComments(t){
   const feed=document.getElementById('feed');
   const cms=(t.comentarios||[]).slice().sort((a,b)=>new Date(b.criadoEm)-new Date(a.criadoEm));
-  if(!cms.length){feed.innerHTML=`<div style="font-size:12px;color:var(--ink-4);padding:12px 0;text-align:center">Sem comentários ainda.</div>`;return;}
-  feed.innerHTML=cms.map(c=>{
+  if(!cms.length){
+    feed.innerHTML=`<div style="font-size:12px;color:var(--ink-4);padding:20px 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" width="28" height="28" style="opacity:.3"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Sem comentários ainda
+    </div>`;
+    return;
+  }
+  feed.innerHTML=cms.map((c,i)=>{
     const p=person(c.pessoa||'me');
-    return`<div class="feed-item">
-      <span class="av" style="width:28px;height:28px;border-radius:50%;background:${p.cor};display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0">${initials(p.nome)}</span>
-      <div class="fi-body">
-        <div class="fi-head"><b>${esc(p.nome)}</b><span class="fi-t">${fmtAgo(new Date(c.criadoEm))}</span></div>
-        <div class="fi-txt">${esc(c.texto)}</div>
+    const dt=c.criadoEm?new Date(c.criadoEm):new Date();
+    return`<div class="cm-item" style="animation-delay:${i*.05}s">
+      <span class="cm-av" style="background:${p.cor}">${initials(p.nome)}</span>
+      <div class="cm-bubble">
+        <div class="cm-head">
+          <span class="cm-name">${esc(p.nome)}</span>
+          <span class="cm-time">${fmtAgo(dt)}</span>
+        </div>
+        <div class="cm-text">${esc(c.texto)}</div>
       </div>
     </div>`;
   }).join('');
