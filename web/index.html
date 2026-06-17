@@ -729,9 +729,16 @@ async function checkAuth(){
   }catch{return!!AUTH_TOKEN;}
 }
 async function doLogin(pwd){
-  const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
-  if(r.ok){const{token}=await r.json();AUTH_TOKEN=token;localStorage.setItem(TK,token);return true;}
-  return false;
+  try{
+    const r=await fetch('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+    if(r.ok){const{token}=await r.json();AUTH_TOKEN=token;localStorage.setItem(TK,token);return{ok:true};}
+    return{ok:false,msg:'Senha incorreta. Tente novamente.'};
+  }catch(e){
+    const isLocal=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+    return{ok:false,msg:isLocal
+      ?'App rodando em localhost — abra https://cerne-five.vercel.app para acessar com senha.'
+      :'Erro de conexão com o servidor. Tente novamente.'};
+  }
 }
 function showLogin(){
   document.getElementById('loginScreen').hidden=false;
@@ -745,12 +752,16 @@ function showApp(){
 document.getElementById('loginForm').addEventListener('submit',async e=>{
   e.preventDefault();
   const pwd=document.getElementById('loginPwd').value;
-  const err=document.getElementById('loginErr');
+  const errEl=document.getElementById('loginErr');
   const btn=e.target.querySelector('button[type=submit]');
   btn.disabled=true;btn.textContent='Entrando…';
-  const ok=await doLogin(pwd);
-  if(ok){err.hidden=true;await boot();}
-  else{err.hidden=false;btn.disabled=false;btn.textContent='Entrar no board';document.getElementById('loginPwd').select();}
+  const res=await doLogin(pwd);
+  if(res.ok){errEl.hidden=true;await boot();}
+  else{
+    errEl.textContent=res.msg;errEl.hidden=false;
+    btn.disabled=false;btn.textContent='Entrar no board';
+    document.getElementById('loginPwd').select();
+  }
 });
 document.getElementById('btnLogout').addEventListener('click',()=>{
   AUTH_TOKEN=null;localStorage.removeItem(TK);showLogin();
