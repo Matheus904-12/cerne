@@ -17,7 +17,7 @@ function cors(res) {
 export default async function handler(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (!authCheck(req, res)) return;
+  if (!await authCheck(req, res)) return;
 
   const DB_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_DATABASE_URL;
   if (!DB_URL) {
