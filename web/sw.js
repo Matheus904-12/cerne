@@ -1,6 +1,6 @@
 // Service worker mínimo: cacheia o app shell para abrir offline.
 // Dados das tarefas continuam vindo do GitHub (online) ou do localStorage (offline).
-const CACHE = "cerne-shell-v1";
+const CACHE = "cerne-shell-v2";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
