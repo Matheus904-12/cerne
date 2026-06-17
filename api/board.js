@@ -19,14 +19,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!authCheck(req, res)) return;
 
-  if (!process.env.DATABASE_URL) {
+  const DB_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_DATABASE_URL;
+  if (!DB_URL) {
     if (req.method === 'GET') return res.status(200).json(SEED);
     if (req.method === 'PUT') return res.status(200).json({ ok: true, mode: 'localStorage' });
     return res.status(405).end();
   }
 
   const { neon } = await import('@neondatabase/serverless');
-  const sql = neon(process.env.DATABASE_URL);
+  const sql = neon(DB_URL);
 
   try {
     if (req.method === 'GET') {

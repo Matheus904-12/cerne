@@ -6,8 +6,11 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const SEED = require('../data/tasks.json');
 
+// O prefixo da integração Neon pode variar (com ou sem DATABASE_URL_)
+const DB_URL = process.env.DATABASE_URL || process.env.DATABASE_URL_DATABASE_URL;
+
 export default async function handler(req, res) {
-  if (!process.env.DATABASE_URL) {
+  if (!DB_URL) {
     return res.status(503).json({
       error: 'DATABASE_URL não configurado.',
       instrucao: 'Conecte Neon Postgres via Vercel Marketplace e redefina as env vars.',
@@ -15,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const { neon } = await import('@neondatabase/serverless');
-  const sql = neon(process.env.DATABASE_URL);
+  const sql = neon(DB_URL);
 
   try {
     // Cria tabela se não existir
