@@ -2,5 +2,8 @@
   "version": 2,
   "outputDirectory": "web",
   "buildCommand": "echo ok",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "redirects": [
+    { "source": "/favicon.ico", "destination": "/icon-192.png", "permanent": false }
+  ]
 }
