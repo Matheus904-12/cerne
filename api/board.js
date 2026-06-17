@@ -1,23 +1,24 @@
 /**
- * GET  /api/board → retorna o board completo (DB ou seed)
+ * GET  /api/board → retorna o board completo
  * PUT  /api/board → salva o board no banco
  */
+import { authCheck } from './_auth.js';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const SEED = require('../data/tasks.json');
 
-function setCors(res) {
+function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 }
 
 export default async function handler(req, res) {
-  setCors(res);
+  cors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (!authCheck(req, res)) return;
 
-  // Sem banco configurado: GET retorna seed, PUT é no-op (dados vão ao localStorage)
   if (!process.env.DATABASE_URL) {
     if (req.method === 'GET') return res.status(200).json(SEED);
     if (req.method === 'PUT') return res.status(200).json({ ok: true, mode: 'localStorage' });
@@ -30,8 +31,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const rows = await sql`SELECT data FROM board WHERE id = 'main'`;
-      const data = rows.length > 0 ? rows[0].data : SEED;
-      return res.status(200).json(data);
+      return res.status(200).json(rows.length > 0 ? rows[0].data : SEED);
     }
 
     if (req.method === 'PUT') {
