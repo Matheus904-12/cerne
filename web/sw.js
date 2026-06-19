@@ -1,23 +1,41 @@
-// Service worker mínimo: cacheia o app shell para abrir offline.
-// Dados das tarefas continuam vindo do GitHub (online) ou do localStorage (offline).
-const CACHE = "cerne-shell-v2";
+// Service worker: network-first para HTML (garante atualização automática no deploy),
+// cache-first para assets estáticos, nunca cacheia chamadas de API.
+const CACHE = "cerne-shell-v3";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
+
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
+
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // Nunca cacheia chamadas de API — sempre rede.
+
+  // Nunca cacheia API.
   if (url.hostname === "api.github.com" || url.pathname.startsWith("/api/")) return;
-  // App shell: cache-first.
+
+  // HTML: network-first — busca versão nova no Vercel, cai no cache só se offline.
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Assets estáticos: cache-first.
   e.respondWith(
     caches.match(e.request).then((hit) => hit || fetch(e.request))
   );
