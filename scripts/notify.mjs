@@ -12,12 +12,24 @@
  *   TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
  */
 import { readFile, writeFile } from "node:fs/promises";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import nodemailer from "nodemailer";
 
-const FILE = "data/tasks.json";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const FILE = resolve(__dirname, "../data/tasks.json");
 const agora = Date.now();
 
-const db = JSON.parse(await readFile(FILE, "utf8"));
+let db;
+try {
+  db = JSON.parse(await readFile(FILE, "utf8"));
+} catch (e) {
+  if (e.code === "ENOENT") {
+    console.log("data/tasks.json não encontrado. Nenhum lembrete a processar.");
+    process.exit(0);
+  }
+  throw e;
+}
 const pendentes = db.tarefas.filter(
   (t) => t.lembrete && !t.notificadoEm && new Date(t.lembrete).getTime() <= agora && !t.concluido
 );
