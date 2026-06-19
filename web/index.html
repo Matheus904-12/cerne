@@ -953,6 +953,57 @@ body{
 .assignee-chip.selected{border-color:var(--blue);color:var(--blue-hi);background:rgba(47,107,255,.08)}
 .assignee-chip:hover{border-color:#2a313d;color:var(--ink)}
 
+/* Toggle switch */
+.toggle-switch{display:inline-flex;cursor:pointer;align-items:center}
+.toggle-switch input{position:absolute;opacity:0;width:0;height:0}
+.toggle-track{
+  width:42px;height:24px;border-radius:12px;background:#1d222b;
+  border:1px solid var(--line);transition:.2s;position:relative;
+}
+.toggle-switch input:checked+.toggle-track{background:var(--blue);border-color:var(--blue)}
+.toggle-thumb{
+  position:absolute;top:2px;left:2px;width:18px;height:18px;
+  border-radius:50%;background:#fff;transition:.2s;
+  box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.toggle-switch input:checked+.toggle-track .toggle-thumb{transform:translateX(18px)}
+
+/* ── SETTINGS MODAL ─────────────────────────────────── */
+.cfg-modal{
+  max-width:700px!important;padding:0!important;
+  display:flex;flex-direction:column;overflow:hidden;
+  max-height:88dvh;
+}
+.cfg-modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px 0;flex-shrink:0;
+}
+.cfg-modal-head h2{font-size:16px;font-weight:700;margin:0}
+.cfg-modal-body{display:flex;flex:1;overflow:hidden;min-height:0}
+.cfg-sidebar{
+  width:168px;flex-shrink:0;border-right:1px solid var(--line);
+  padding:12px 8px;display:flex;flex-direction:column;gap:2px;
+}
+.cfg-nav-btn{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  font:inherit;font-size:13px;font-weight:500;color:var(--ink-3);
+  background:none;border:none;cursor:pointer;
+  padding:8px 12px;border-radius:9px;transition:.15s;
+}
+.cfg-nav-btn:hover{background:#0e1117;color:var(--ink)}
+.cfg-nav-btn.on{background:#111623;color:var(--blue-hi)}
+.cfg-nav-btn svg{width:15px;height:15px;flex-shrink:0}
+.cfg-content{flex:1;overflow-y:auto;padding:16px 20px 20px}
+.cfg-content::-webkit-scrollbar{width:5px}
+.cfg-content::-webkit-scrollbar-thumb{background:#1a1f28;border-radius:4px}
+.cfg-section{display:none}
+.cfg-section.on{display:block}
+.cfg-section h3{font-size:14px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em}
+.cfg-modal-foot{
+  display:flex;gap:9px;justify-content:flex-end;
+  padding:14px 20px;border-top:1px solid var(--line);flex-shrink:0;
+}
+
 /* ── MOBILE (Nubank style) ──────────────────────── */
 @media(max-width:640px){
   /* ── Layout ── */
@@ -1026,12 +1077,12 @@ body{
   /* Avatar de perfil no topbar */
   #meAvMob{
     width:34px;height:34px;border-radius:50%;
-    background:var(--blue);border:2px solid rgba(47,107,255,.35);
-    box-shadow:0 0 0 1px rgba(47,107,255,.2);
+    background:var(--blue);border:none;
+    box-shadow:0 0 0 2px var(--app);
     overflow:hidden;cursor:pointer;transition:.2s;
   }
   #meAvMob img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
-  #meAvMob.on{border-color:var(--blue-hi);box-shadow:0 0 0 3px rgba(47,107,255,.35)}
+  #meAvMob.on{box-shadow:0 0 0 2px var(--blue)}
 
   /* ── Toolbar ── */
   .toolbar{padding:6px 14px;gap:6px}
@@ -1087,11 +1138,14 @@ body{
     max-height:94dvh;
     padding-bottom:env(safe-area-inset-bottom,16px);
   }
-  /* Modal de configurações: maior e mais espaçoso */
-  #scrimCfg .modal{
-    max-height:91dvh;
-    padding:28px 22px calc(28px + env(safe-area-inset-bottom,0px));
-  }
+  /* Settings mobile */
+  .cfg-modal{max-height:91dvh!important;padding:0!important}
+  .cfg-modal-body{flex-direction:column}
+  .cfg-sidebar{width:100%;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);padding:8px;gap:4px;flex-shrink:0}
+  .cfg-sidebar::-webkit-scrollbar{display:none}
+  .cfg-nav-btn{padding:7px 11px;white-space:nowrap;flex-shrink:0}
+  .cfg-nav-btn svg{display:none}
+  .cfg-content{padding:14px 16px 16px}
   #scrimTask .modal{padding:24px 18px env(safe-area-inset-bottom,16px)}
 
   /* ── Misc ── */
@@ -1406,27 +1460,113 @@ body{
 
 <!-- MODAL: CONFIG -->
 <div class="scrim" id="scrimCfg">
-  <div class="modal">
-    <h2>Configurações do board</h2>
-    <div class="field"><label>Nome do board</label><input id="c_boardName" placeholder="Meu Board"/></div>
-    <div class="field"><label>Colunas</label>
-      <div id="c_colunas" style="display:flex;flex-direction:column;gap:8px"></div>
+  <div class="modal cfg-modal">
+    <div class="cfg-modal-head">
+      <h2>Configurações</h2>
     </div>
-    <div class="field"><label>Membros da equipe</label>
-      <div id="c_pessoas" style="display:flex;flex-direction:column;gap:8px"></div>
-      <button type="button" id="btnAddPessoa" style="margin-top:6px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;color:var(--blue-hi);background:rgba(47,107,255,.08);border:1px solid rgba(47,107,255,.25);padding:7px 12px;border-radius:9px;transition:.15s;width:100%">+ Adicionar membro</button>
+    <div class="cfg-modal-body">
+      <!-- Sidebar -->
+      <nav class="cfg-sidebar">
+        <button class="cfg-nav-btn on" data-cfg="geral">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Geral
+        </button>
+        <button class="cfg-nav-btn" data-cfg="colunas">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="1.5"/><rect x="14" y="3" width="7" height="11" rx="1.5"/></svg>
+          Colunas
+        </button>
+        <button class="cfg-nav-btn" data-cfg="membros">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Membros
+        </button>
+        <button class="cfg-nav-btn" data-cfg="notif">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notificações
+        </button>
+        <button class="cfg-nav-btn" data-cfg="sons">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          Sons
+        </button>
+      </nav>
+      <!-- Content -->
+      <div class="cfg-content">
+        <!-- Geral -->
+        <div class="cfg-section on" id="cfgGeral">
+          <h3>Geral</h3>
+          <div class="field"><label>Nome do board</label><input id="c_boardName" placeholder="Meu Board"/></div>
+          <div class="field"><label>Idioma</label>
+            <select id="c_lang">
+              <option value="pt-BR">🇧🇷 Português (BR)</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="es">🇪🇸 Español</option>
+            </select>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:var(--ink-3)">
+            Senha de acesso: defina <code style="background:#0e1116;padding:2px 6px;border-radius:5px">BOARD_PASSWORD</code> nas env vars do Vercel.
+          </div>
+        </div>
+        <!-- Colunas -->
+        <div class="cfg-section" id="cfgColunas">
+          <h3>Colunas</h3>
+          <div id="c_colunas" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <!-- Membros -->
+        <div class="cfg-section" id="cfgMembros">
+          <h3>Membros da equipe</h3>
+          <div id="c_pessoas" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button type="button" id="btnAddPessoa" style="margin-top:10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;color:var(--blue-hi);background:rgba(47,107,255,.08);border:1px solid rgba(47,107,255,.25);padding:8px 14px;border-radius:9px;transition:.15s;width:100%">+ Adicionar membro</button>
+        </div>
+        <!-- Notificações -->
+        <div class="cfg-section" id="cfgNotif">
+          <h3>Notificações</h3>
+          <div style="font-size:13px;color:var(--ink-3);line-height:1.6;margin-bottom:16px">
+            Lembretes são enviados automaticamente via GitHub Actions.<br>
+            Configure as variáveis de ambiente no Vercel para receber também pelo app.
+          </div>
+          <div class="field"><label>E-mail destino (MAIL_TO)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="c_mailTo" placeholder="seu@email.com" readonly style="flex:1"/>
+              <span id="mailToStatus" style="font-size:11px;font-weight:600;white-space:nowrap"></span>
+            </div>
+          </div>
+          <div class="field"><label>Telegram Chat ID (TELEGRAM_CHAT_ID)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="c_telegramChatId" placeholder="123456789" readonly style="flex:1"/>
+              <span id="telegramStatus" style="font-size:11px;font-weight:600;white-space:nowrap"></span>
+            </div>
+          </div>
+          <button type="button" id="btnTestNotif" class="btn" style="margin-top:6px">
+            <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+            Enviar notificação de teste
+          </button>
+          <div id="notifTestResult" style="margin-top:10px;font-size:12px;display:none"></div>
+        </div>
+        <!-- Sons -->
+        <div class="cfg-section" id="cfgSons">
+          <h3>Sons</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <div>
+              <div style="font-size:14px;font-weight:600">Efeitos sonoros</div>
+              <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Sons ao criar, mover e completar tarefas</div>
+            </div>
+            <label class="toggle-switch" id="soundToggle">
+              <input type="checkbox" id="c_soundEnabled" checked/>
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Prévia dos sons</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <button class="btn ghost sound-preview-btn" data-sound="create">Criar tarefa</button>
+            <button class="btn ghost sound-preview-btn" data-sound="move">Mover</button>
+            <button class="btn ghost sound-preview-btn" data-sound="complete">Concluir</button>
+            <button class="btn ghost sound-preview-btn" data-sound="delete">Remover</button>
+            <button class="btn ghost sound-preview-btn" data-sound="error">Erro</button>
+            <button class="btn ghost sound-preview-btn" data-sound="notification">Notificação</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="field"><label>Idioma</label>
-      <select id="c_lang" style="width:100%;font:inherit;font-size:13.5px;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:10px 12px;border-radius:10px;outline:none;cursor:pointer">
-        <option value="pt-BR">🇧🇷 Português (BR)</option>
-        <option value="en">🇺🇸 English</option>
-        <option value="es">🇪🇸 Español</option>
-      </select>
-    </div>
-    <div style="margin-top:4px;font-size:12px;color:var(--ink-3)">
-      Senha de acesso: defina <code style="background:#0e1116;padding:2px 6px;border-radius:5px">BOARD_PASSWORD</code> nas env vars do Vercel.
-    </div>
-    <div class="modal-actions">
+    <div class="cfg-modal-foot">
       <button class="btn ghost" id="btnCancelCfg">Cancelar</button>
       <button class="btn primary" id="btnSaveCfg">Salvar</button>
     </div>
@@ -1481,9 +1621,39 @@ let lang=localStorage.getItem(LS_LANG)||'pt-BR';
 
 /* ─── IDIOMAS ─────────────────────────────────────────── */
 const LANGS={
-  'pt-BR':{addTask:'Nova tarefa',search:'Pesquisar tarefas…',filters:'Filtros',me:'Eu',showDone:'Mostrar concluídas',boardLbl:'Board',listLbl:'Lista',calLbl:'Calendário'},
-  'en':{addTask:'Add task',search:'Search tasks…',filters:'Filters',me:'Me',showDone:'Show done',boardLbl:'Board',listLbl:'List',calLbl:'Calendar'},
-  'es':{addTask:'Nueva tarea',search:'Buscar tareas…',filters:'Filtros',me:'Yo',showDone:'Mostrar hechas',boardLbl:'Board',listLbl:'Lista',calLbl:'Calendario'},
+  'pt-BR':{
+    addTask:'Nova tarefa',search:'Pesquisar tarefas…',filters:'Filtros',me:'Eu',showDone:'Mostrar concluídas',
+    boardLbl:'Board',listLbl:'Lista',calLbl:'Calendário',reportsLbl:'Métricas',msgsLbl:'Mensagens',notesLbl:'Notas',
+    done:'Concluído',inProgress:'Em andamento',todo:'A Fazer',review:'Revisão',
+    high:'Alta',medium:'Média',low:'Baixa',
+    dueToday:'Vence hoje',overdue:'Atrasado',noTasks:'Nenhuma tarefa',
+    save:'Salvar',cancel:'Cancelar',delete:'Remover',close:'Fechar',
+    settings:'Configurações',addMember:'+ Adicionar membro',
+    notesEmpty:'Selecione ou crie uma nota',newNote:'Nova nota',
+    cfgGeneral:'Geral',cfgColumns:'Colunas',cfgMembers:'Membros',cfgNotif:'Notificações',cfgSounds:'Sons',
+  },
+  'en':{
+    addTask:'Add task',search:'Search tasks…',filters:'Filters',me:'Me',showDone:'Show done',
+    boardLbl:'Board',listLbl:'List',calLbl:'Calendar',reportsLbl:'Metrics',msgsLbl:'Messages',notesLbl:'Notes',
+    done:'Done',inProgress:'In Progress',todo:'To Do',review:'Review',
+    high:'High',medium:'Medium',low:'Low',
+    dueToday:'Due today',overdue:'Overdue',noTasks:'No tasks',
+    save:'Save',cancel:'Cancel',delete:'Remove',close:'Close',
+    settings:'Settings',addMember:'+ Add member',
+    notesEmpty:'Select or create a note',newNote:'New note',
+    cfgGeneral:'General',cfgColumns:'Columns',cfgMembers:'Members',cfgNotif:'Notifications',cfgSounds:'Sounds',
+  },
+  'es':{
+    addTask:'Nueva tarea',search:'Buscar tareas…',filters:'Filtros',me:'Yo',showDone:'Mostrar hechas',
+    boardLbl:'Board',listLbl:'Lista',calLbl:'Calendario',reportsLbl:'Métricas',msgsLbl:'Mensajes',notesLbl:'Notas',
+    done:'Hecho',inProgress:'En progreso',todo:'Por hacer',review:'Revisión',
+    high:'Alta',medium:'Media',low:'Baja',
+    dueToday:'Vence hoy',overdue:'Atrasado',noTasks:'Sin tareas',
+    save:'Guardar',cancel:'Cancelar',delete:'Eliminar',close:'Cerrar',
+    settings:'Configuración',addMember:'+ Agregar miembro',
+    notesEmpty:'Selecciona o crea una nota',newNote:'Nueva nota',
+    cfgGeneral:'General',cfgColumns:'Columnas',cfgMembers:'Miembros',cfgNotif:'Notificaciones',cfgSounds:'Sonidos',
+  },
 };
 function i18n(k){return(LANGS[lang]||LANGS['pt-BR'])[k]||k}
 function setLastTextNode(el,text){
@@ -1500,6 +1670,24 @@ function applyLang(){
   setLastTextNode(document.getElementById('btnMe'),' '+i18n('me'));
   setLastTextNode(document.getElementById('btnShow'),' '+i18n('showDone'));
   const cl=document.getElementById('c_lang');if(cl)cl.value=lang;
+  // nav labels
+  document.querySelectorAll('.nav-btn[data-view]').forEach(b=>{
+    const map={board:'boardLbl',list:'listLbl',calendar:'calLbl',reports:'reportsLbl',messages:'msgsLbl',notes:'notesLbl'};
+    const k=map[b.dataset.view];if(k)b.dataset.label=i18n(k);
+  });
+  // topbar tabs
+  document.querySelectorAll('.tab[data-tab]').forEach(b=>{
+    const map={board:'boardLbl',list:'listLbl',calendar:'calLbl'};
+    const k=map[b.dataset.tab];if(k)setLastTextNode(b,' '+i18n(k));
+  });
+  // cfg modal sections (se já estiver aberto)
+  document.querySelectorAll('.cfg-nav-btn[data-cfg]').forEach(b=>{
+    const map={geral:'cfgGeneral',colunas:'cfgColumns',membros:'cfgMembers',notif:'cfgNotif',sons:'cfgSounds'};
+    const k=map[b.dataset.cfg];if(k)setLastTextNode(b,'\n          '+i18n(k)+'\n        ');
+  });
+  // notes empty label
+  const ne=document.getElementById('nvEmpty');if(ne){const p=ne.querySelector('p');if(p)p.textContent=i18n('notesEmpty');}
+  const bn=document.getElementById('btnNewNote2');if(bn)bn.textContent=i18n('newNote');
 }
 
 /* ─── HELPERS ─────────────────────────────────────────── */
@@ -1723,7 +1911,7 @@ function wireDnD(){
         t.coluna=b.dataset.col;t.atualizadoEm=new Date().toISOString();
         const lastCol=(DB.colunas||[]).slice().sort((a,c)=>a.ordem-c.ordem).at(-1);
         const isLast=lastCol&&b.dataset.col===lastCol.id;
-        if(isLast){t.concluido=true;playSound('complete');}else t.concluido=false;
+        if(isLast){t.concluido=true;playSound('complete');}else{t.concluido=false;playSound('move');}
         renderBoard();push(true);
       }
     });
@@ -1980,12 +2168,14 @@ document.getElementById('btnSaveTask').addEventListener('click',()=>{
   if(!DB.tarefas)DB.tarefas=[];
   if(id){Object.assign(DB.tarefas.find(x=>x.id===id),data,{concluido:data.coluna==='feito'});}
   else{DB.tarefas.push({id:nextId(),...data,tags:[],comentarios:[],timeLog:{},notaVinculada:null,criadoEm:now,concluido:data.coluna==='feito'});}
+  playSound(id?'save':'create');
   closeAll();render();push();
   toast(id?'Tarefa atualizada ✓':'Tarefa criada ✓');
 });
 document.getElementById('btnDelete').addEventListener('click',()=>{
   const id=document.getElementById('f_id').value;
   DB.tarefas=DB.tarefas.filter(x=>x.id!==id);
+  playSound('delete');
   closeAll();render();push();toast('Tarefa removida','warn');
 });
 document.getElementById('btnNew').addEventListener('click',()=>openTask(null,'todo'));
@@ -2032,18 +2222,89 @@ function renderAnexosList(){
 
 /* ─── MODAL CONFIG ────────────────────────────────────── */
 const scrimCfg=document.getElementById('scrimCfg');
+
+// Navegação entre seções
+document.querySelectorAll('.cfg-nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.cfg-nav-btn').forEach(b=>b.classList.remove('on'));
+    document.querySelectorAll('.cfg-section').forEach(s=>s.classList.remove('on'));
+    btn.classList.add('on');
+    const sec=document.getElementById('cfg'+btn.dataset.cfg.charAt(0).toUpperCase()+btn.dataset.cfg.slice(1));
+    if(sec)sec.classList.add('on');
+  });
+});
+
 document.getElementById('btnSettings').addEventListener('click',()=>{
+  if(!DB)return;
   document.getElementById('c_boardName').value=DB?.board?.nome||'';
-  // membros
+  document.getElementById('c_lang').value=lang;
+  // Colunas
+  buildColunasEditor();
+  // Membros
   buildPessoasEditor();
-  const cont=document.getElementById('c_colunas');
+  // Notificações — checar env vars via API
+  checkNotifStatus();
+  // Sons
+  document.getElementById('c_soundEnabled').checked=soundEnabled;
+  // Reset para seção Geral
+  document.querySelectorAll('.cfg-nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.cfg==='geral'));
+  document.querySelectorAll('.cfg-section').forEach(s=>s.classList.toggle('on',s.id==='cfgGeral'));
+  scrimCfg.classList.add('open');
+});
+
+function buildColunasEditor(){
+  const cont=document.getElementById('c_colunas');if(!cont)return;
   cont.innerHTML=(DB?.colunas||[]).map(c=>`
     <div style="display:flex;align-items:center;gap:8px">
       <input type="color" value="${c.cor}" data-col-id="${c.id}" class="col-color-inp" style="width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;background:none;padding:0">
       <input type="text" value="${esc(c.nome)}" data-col-id="${c.id}" class="col-name-inp" style="flex:1;font:inherit;font-size:13px;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:8px 11px;border-radius:9px;outline:none">
     </div>`).join('');
-  scrimCfg.classList.add('open');
+}
+
+async function checkNotifStatus(){
+  try{
+    const r=await fetch('/api/notify-status',{headers:AUTH_TOKEN?{Authorization:`Bearer ${AUTH_TOKEN}`}:{}});
+    if(r.ok){
+      const j=await r.json();
+      const mailEl=document.getElementById('c_mailTo');
+      const tgEl=document.getElementById('c_telegramChatId');
+      const ms=document.getElementById('mailToStatus');
+      const ts=document.getElementById('telegramStatus');
+      if(mailEl)mailEl.value=j.mailTo||'';
+      if(tgEl)tgEl.value=j.telegramChatId||'';
+      if(ms)ms.innerHTML=j.emailOk?'<span style="color:#4ade80">✓ Configurado</span>':'<span style="color:var(--ink-4)">Não configurado</span>';
+      if(ts)ts.innerHTML=j.telegramOk?'<span style="color:#4ade80">✓ Configurado</span>':'<span style="color:var(--ink-4)">Não configurado</span>';
+    }
+  }catch{}
+}
+
+document.getElementById('btnTestNotif')?.addEventListener('click',async()=>{
+  const btn=document.getElementById('btnTestNotif');
+  const res=document.getElementById('notifTestResult');
+  if(!res)return;
+  btn.disabled=true;btn.textContent='Enviando…';
+  try{
+    const r=await fetch('/api/notify-test',{method:'POST',headers:authHeaders()});
+    const j=r.ok?await r.json():{error:'Erro de conexão'};
+    res.style.display='block';
+    res.style.color=j.error?'#f87171':'#4ade80';
+    res.textContent=j.error||`✓ ${j.message||'Notificação enviada!'}`;
+  }catch(e){
+    res.style.display='block';res.style.color='#f87171';res.textContent='Erro: '+e.message;
+  }
+  btn.disabled=false;btn.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:6px"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>Enviar notificação de teste';
 });
+
+// Toggle de som
+document.getElementById('c_soundEnabled')?.addEventListener('change',e=>{
+  setSoundEnabled(e.target.checked);
+  if(e.target.checked)playSound('notification',true);
+});
+// Preview de sons
+document.querySelectorAll('.sound-preview-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>playSound(btn.dataset.sound,true));
+});
+
 document.getElementById('btnCancelCfg').addEventListener('click',closeAll);
 document.getElementById('btnSaveCfg').addEventListener('click',()=>{
   if(!DB)return;
@@ -2056,7 +2317,6 @@ document.getElementById('btnSaveCfg').addEventListener('click',()=>{
     const col=(DB.colunas||[]).find(c=>c.id===inp.dataset.colId);
     if(col)col.cor=inp.value;
   });
-  // salvar membros
   document.querySelectorAll('.pessoa-name-inp').forEach(inp=>{
     const p=(DB.pessoas||[]).find(x=>x.id===inp.dataset.pid);
     if(p)p.nome=inp.value.trim()||p.nome;
@@ -2067,6 +2327,7 @@ document.getElementById('btnSaveCfg').addEventListener('click',()=>{
   });
   const newLang=document.getElementById('c_lang').value;
   if(newLang!==lang){lang=newLang;localStorage.setItem(LS_LANG,lang);applyLang();}
+  playSound('save');
   closeAll();render();push();toast('Configurações salvas ✓');
 });
 
@@ -2194,29 +2455,35 @@ document.getElementById('playBtn').addEventListener('click',()=>{
 });
 
 /* ─── SONS ────────────────────────────────────────────── */
-function playSound(type){
+let soundEnabled=JSON.parse(localStorage.getItem('cerne_sounds')??(true+''));
+function setSoundEnabled(v){soundEnabled=v;localStorage.setItem('cerne_sounds',JSON.stringify(v));}
+let _sharedCtx=null;
+function getAC(){
+  if(!_sharedCtx){const AC=window.AudioContext||window.webkitAudioContext;if(AC)_sharedCtx=new AC();}
+  return _sharedCtx;
+}
+function tone(freq,start,dur,type='sine',vol=0.22,ctx){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(vol,ctx.currentTime+start);
+  g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+start+dur);
+  o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur+0.05);
+}
+function playSound(type,force=false){
+  if(!soundEnabled&&!force)return;
   try{
-    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-    const ctx=new AC();
-    if(ctx.state==='suspended'){ctx.resume();}
-    const o=ctx.createOscillator(),g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);
-    if(type==='complete'){
-      o.type='sine';
-      o.frequency.setValueAtTime(523.25,ctx.currentTime);
-      o.frequency.setValueAtTime(659.25,ctx.currentTime+.12);
-      o.frequency.setValueAtTime(783.99,ctx.currentTime+.24);
-      g.gain.setValueAtTime(.22,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.6);
-      o.start();o.stop(ctx.currentTime+.65);
-    }else if(type==='overdue'){
-      o.type='sine';
-      o.frequency.setValueAtTime(440,ctx.currentTime);
-      o.frequency.setValueAtTime(392,ctx.currentTime+.15);
-      g.gain.setValueAtTime(.18,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.4);
-      o.start();o.stop(ctx.currentTime+.45);
-    }
+    const ctx=getAC();if(!ctx)return;
+    if(ctx.state==='suspended')ctx.resume();
+    if(type==='create'){tone(523.25,0,.1,'sine',.15,ctx);tone(659.25,.1,.15,'sine',.15,ctx);}
+    else if(type==='complete'){tone(523.25,0,.12,'sine',.2,ctx);tone(659.25,.13,.12,'sine',.2,ctx);tone(783.99,.27,.25,'sine',.2,ctx);}
+    else if(type==='move'){tone(440,0,.08,'sine',.12,ctx);tone(523.25,.09,.1,'sine',.12,ctx);}
+    else if(type==='delete'){tone(330,0,.1,'sine',.15,ctx);tone(220,.1,.18,'sine',.12,ctx);}
+    else if(type==='error'){tone(220,0,.12,'triangle',.2,ctx);tone(196,.12,.18,'triangle',.15,ctx);}
+    else if(type==='notification'){tone(880,0,.08,'sine',.15,ctx);tone(1046.5,.1,.12,'sine',.15,ctx);tone(880,.24,.15,'sine',.1,ctx);}
+    else if(type==='overdue'){tone(440,0,.15,'sine',.18,ctx);tone(392,.16,.2,'sine',.15,ctx);}
+    else if(type==='open'){tone(392,0,.07,'sine',.1,ctx);}
+    else if(type==='save'){tone(659.25,0,.08,'sine',.14,ctx);tone(783.99,.09,.12,'sine',.14,ctx);}
   }catch(e){}
 }
 
