@@ -207,13 +207,13 @@ body{
 .board-view{display:flex;flex-direction:column;flex:1;overflow:hidden}
 .board{
   display:flex;gap:14px;padding:14px 20px 20px;
-  overflow-x:auto;overflow-y:hidden;flex:1;scroll-snap-type:x proximity;
+  overflow-x:auto;overflow-y:hidden;flex:1;
 }
 .board::-webkit-scrollbar{height:7px}
 .board::-webkit-scrollbar-thumb{background:#1d222b;border-radius:8px}
 .col{
   flex:0 0 284px;max-width:90vw;display:flex;flex-direction:column;min-height:0;
-  scroll-snap-align:start;animation:colIn .5s var(--ease) both;
+  animation:colIn .5s var(--ease) both;
 }
 .col:nth-child(1){animation-delay:.04s}.col:nth-child(2){animation-delay:.1s}
 .col:nth-child(3){animation-delay:.16s}.col:nth-child(4){animation-delay:.22s}
