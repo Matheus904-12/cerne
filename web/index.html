@@ -308,7 +308,8 @@ body{
 .nb-ta{
   width:100%;background:none;border:none;outline:none;font:inherit;
   font-size:14px;color:var(--ink);line-height:1.6;resize:none;
-  padding:2px 0;transition:color .15s;overflow:hidden;
+  padding:2px 0;transition:color .15s;overflow:hidden;min-height:28px;
+  touch-action:manipulation;
 }
 .nb-ta::placeholder{color:var(--ink-4)}
 .nb-ta.nb-h1{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
@@ -586,8 +587,8 @@ body{
   background:var(--app);border-left:1px solid var(--line-soft);
   display:flex;flex-direction:column;padding:16px 16px 0;overflow:hidden;
 }
-.act-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px}
-.act-head h2{font-size:15px;font-weight:600}
+.act-head{display:flex;align-items:center;margin-bottom:16px;gap:8px}
+.act-head h2{font-size:15px;font-weight:600;flex:1}
 .act-head .bell{
   width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
   background:#0e1117;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;
@@ -779,16 +780,6 @@ body{
 .toast-ok{background:#0e2818;border:1px solid #1a4d2e;color:#4ade80}
 .toast-warn{background:#1c1810;border:1px solid #4d3a10;color:#fbbf24}
 .toast-err{background:#1c0e0e;border:1px solid #4d1a1a;color:#f87171}
-
-/* ── TOOLTIP CUSTOMIZADO ────────────────────────── */
-.tip-el{
-  position:fixed;z-index:9999;pointer-events:none;
-  background:#0c0e12;border:1px solid var(--line);color:var(--ink-2);
-  font-size:11.5px;font-weight:500;padding:5px 10px;border-radius:8px;
-  box-shadow:0 4px 14px -4px rgba(0,0,0,.7);white-space:nowrap;
-  transition:opacity .12s;opacity:0;
-}
-.tip-el.show{opacity:1}
 
 /* ── TASK SIDEBAR ───────────────────────────────── */
 .task-sidebar{
@@ -1168,10 +1159,10 @@ body{
   .add{
     position:fixed;bottom:calc(92px + env(safe-area-inset-bottom,0px));right:16px;
     padding:0;width:54px;height:54px;border-radius:50%;
-    font-size:0;display:flex;align-items:center;justify-content:center;
+    font-size:0;gap:0;display:flex;align-items:center;justify-content:center;
     box-shadow:0 4px 24px rgba(47,107,255,.55);z-index:45;
   }
-  .add svg{width:22px;height:22px}
+  .add svg{width:22px;height:22px;display:block}
 
   /* ── Modals (bottom sheet) ── */
   .scrim{align-items:flex-end;padding:0}
@@ -1673,9 +1664,6 @@ body{
   <div class="block-menu-item" data-block="code"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> Código <span>```</span></div>
 </div>
 
-<!-- TOOLTIP -->
-<div id="tipEl" class="tip-el"></div>
-
 <!-- TOASTS -->
 <div class="toasts" id="toasts"></div>
 
@@ -2150,7 +2138,8 @@ document.getElementById('meAvMob').addEventListener('click',()=>{
   document.getElementById('btnMe').click();
 });
 /* Painel direito (activity) como overlay no mobile */
-document.getElementById('btnActivityMob')?.addEventListener('click',()=>{
+document.getElementById('btnActivityMob')?.addEventListener('click',e=>{
+  e.stopPropagation();
   document.body.classList.add('activity-mob-open');
 });
 // Fechar overlay ao clicar no "X" da activity ou no scrim
@@ -2575,25 +2564,7 @@ function playSound(type,force=false){
   }catch(e){}
 }
 
-/* ─── TOOLTIPS ────────────────────────────────────────── */
-function initTooltips(){
-  const tip=document.getElementById('tipEl');
-  document.addEventListener('mouseover',e=>{
-    const el=e.target.closest('[data-tip]');
-    if(!el)return;
-    tip.textContent=el.dataset.tip;
-    tip.classList.add('show');
-  });
-  document.addEventListener('mousemove',e=>{
-    tip.style.left=(e.clientX+12)+'px';
-    tip.style.top=(e.clientY-28)+'px';
-  });
-  document.addEventListener('mouseout',e=>{
-    const dest=e.relatedTarget;
-    if(!dest||!dest.closest('[data-tip]'))tip.classList.remove('show');
-  });
-  document.addEventListener('touchstart',()=>tip.classList.remove('show'),{passive:true});
-}
+
 
 /* ─── ASSIGNEE PICKER ─────────────────────────────────── */
 function buildAssigneePicker(current){
@@ -3099,8 +3070,7 @@ function openNote(id){
     document.getElementById('nvSidebar').hidden=true;
     document.getElementById('nvEditorPanel').hidden=false;
   }
-  renderBlocks(nota);
-  renderNotesList();
+  requestAnimationFrame(()=>{renderBlocks(nota);renderNotesList();});
 }
 
 function renderNoteTags(nota){
@@ -3151,7 +3121,7 @@ function makeBlockEl(bloco,nota){
   return div;
 }
 
-function autoResizeTA(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
+function autoResizeTA(ta){ta.style.height='auto';ta.style.height=Math.max(ta.scrollHeight,28)+'px';}
 function saveBlock(bid,nota){
   const b=(nota.blocos||[]).find(x=>x.id===bid);
   const ta=document.querySelector(`.nb-ta[data-bid="${bid}"]`);
@@ -3274,7 +3244,6 @@ async function boot(){
   setupNotifications();
 }
 (async()=>{
-  initTooltips();
   applyLang();
   const ok=await checkAuth();
   if(ok){await boot();}
