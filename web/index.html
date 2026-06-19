@@ -117,12 +117,18 @@ body{
 
 /* topbar */
 .topbar{
-  display:flex;align-items:center;gap:14px;padding:16px 20px 14px;
+  display:flex;align-items:center;gap:10px;padding:16px 20px 14px;
   border-bottom:1px solid var(--line-soft);
+}
+.topbar-logo{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(from 210deg,var(--blue),#7aa2ff,#fff,var(--blue));
+  box-shadow:0 0 0 1px rgba(255,255,255,.1);
+  display:none; /* visível só no mobile via media query */
 }
 .board-title{
   font-size:17px;font-weight:600;letter-spacing:-.01em;
-  cursor:default;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  cursor:default;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;
 }
 .tabs{
   display:flex;gap:3px;background:#0e1117;border:1px solid var(--line-soft);
@@ -713,15 +719,16 @@ body{
 
 /* ── TOASTS ─────────────────────────────────── */
 .toasts{
-  position:fixed;bottom:24px;right:24px;z-index:200;
-  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+  position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:200;
+  display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;
 }
 .toast{
-  padding:11px 16px;border-radius:11px;font-size:13px;font-weight:500;
-  animation:toastIn .35s var(--spring) both;pointer-events:auto;
-  box-shadow:0 8px 24px -8px rgba(0,0,0,.6);backdrop-filter:blur(8px);
+  padding:11px 20px;border-radius:11px;font-size:13px;font-weight:500;
+  animation:toastIn .32s var(--spring) both;pointer-events:auto;
+  box-shadow:0 8px 28px -6px rgba(0,0,0,.65);backdrop-filter:blur(10px);white-space:nowrap;
+  transition:opacity .3s;
 }
-@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
 .toast-ok{background:#0e2818;border:1px solid #1a4d2e;color:#4ade80}
 .toast-warn{background:#1c1810;border:1px solid #4d3a10;color:#fbbf24}
 .toast-err{background:#1c0e0e;border:1px solid #4d1a1a;color:#f87171}
@@ -1009,7 +1016,8 @@ body{
     background:linear-gradient(180deg,rgba(9,10,14,1) 65%,transparent);
     align-items:center;
   }
-  .board-title{font-size:18px;font-weight:700;letter-spacing:-.02em;flex:1;min-width:0}
+  .topbar-logo{display:block}
+  .board-title{font-size:18px;font-weight:700;letter-spacing:-.02em;min-width:0}
   .tabs{display:none!important}
   /* Esconde logout no mobile (acessível via Configurações) */
   #btnLogout{display:none!important}
@@ -1026,8 +1034,22 @@ body{
   #meAvMob.on{border-color:var(--blue-hi);box-shadow:0 0 0 3px rgba(47,107,255,.35)}
 
   /* ── Toolbar ── */
-  .toolbar{padding:6px 14px;gap:8px}
-  .search{padding:9px 14px;border-radius:12px}
+  .toolbar{padding:6px 14px;gap:6px}
+  .search{padding:9px 12px;border-radius:12px}
+  /* Esconde rótulo dos tool-btn, mantém só ícone */
+  .tool-btn{padding:8px;border-radius:10px;gap:0;font-size:0}
+  .tool-btn svg{width:17px;height:17px}
+
+  /* ── Activity panel como overlay no mobile ── */
+  .activity-mob-open .activity{
+    display:flex!important;
+    position:fixed;inset:0;z-index:55;
+    background:var(--app);
+    border-radius:0;border:none;
+  }
+  .activity-mob-open .activity::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--line);
+  }
 
   /* ── Board / Columns ── */
   .board{padding:10px 14px 16px;gap:12px}
@@ -1140,6 +1162,7 @@ body{
   <section class="center">
     <!-- topbar -->
     <div class="topbar">
+      <div class="topbar-logo" aria-hidden="true"></div>
       <h1 class="board-title" id="boardName">Board</h1>
       <div class="tabs">
         <button class="tab" data-tab="list">
@@ -1155,7 +1178,10 @@ body{
           Calendar
         </button>
       </div>
-      <!-- Mobile-only: settings + avatar no topo -->
+      <!-- Mobile-only: painel direito, settings + avatar no topo -->
+      <button class="iconbtn mob-top-btn" id="btnActivityMob" title="Painel de atividade">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      </button>
       <button class="iconbtn mob-top-btn" id="btnSettingsMob" title="Configurações">
         <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -1848,6 +1874,34 @@ document.getElementById('btnSettingsMob').addEventListener('click',()=>{
 document.getElementById('meAvMob').addEventListener('click',()=>{
   document.getElementById('btnMe').click();
 });
+/* Painel direito (activity) como overlay no mobile */
+document.getElementById('btnActivityMob')?.addEventListener('click',()=>{
+  document.body.classList.add('activity-mob-open');
+});
+// Fechar overlay ao clicar no "X" da activity ou no scrim
+(function(){
+  const closeActMob=()=>document.body.classList.remove('activity-mob-open');
+  document.addEventListener('click',e=>{
+    if(!document.body.classList.contains('activity-mob-open'))return;
+    const act=document.querySelector('.activity');
+    const btn=document.getElementById('btnActivityMob');
+    if(act&&!act.contains(e.target)&&e.target!==btn)closeActMob();
+  });
+  // Botão de fechar dentro do painel
+  const head=document.querySelector('.act-head');
+  if(head){
+    const closeBtn=document.createElement('button');
+    closeBtn.className='iconbtn mob-act-close';closeBtn.title='Fechar';closeBtn.style.cssText='display:none';
+    closeBtn.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+    closeBtn.addEventListener('click',closeActMob);
+    head.appendChild(closeBtn);
+    // Mostrar/ocultar conforme overlay
+    const obs=new MutationObserver(()=>{
+      closeBtn.style.display=document.body.classList.contains('activity-mob-open')?'grid':'none';
+    });
+    obs.observe(document.body,{attributes:true,attributeFilter:['class']});
+  }
+})();
 document.getElementById('btnShow').addEventListener('click',()=>{
   showDone=!showDone;
   document.getElementById('btnShow').classList.toggle('active',showDone);
