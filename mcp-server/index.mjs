@@ -12,7 +12,7 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 
@@ -22,6 +22,7 @@ const REPO_ROOT = process.env.REPO_ROOT
   : resolve(dirname(new URL(import.meta.url).pathname), "..");
 
 const TASKS_FILE = join(REPO_ROOT, "data", "tasks.json");
+const NOTES_KB_FILE = join(REPO_ROOT, "data", "notes.json");
 const NOTES_DIR = join(REPO_ROOT, "notes");
 
 // Obsidian: se OBSIDIAN_VAULT apontar para a vault, notas são espelhadas lá.
@@ -160,6 +161,72 @@ const TOOLS = [
       properties: {
         apenasColuna: { type: "string", description: "limita a uma coluna (opcional)" },
       },
+    },
+  },
+  // ── KNOWLEDGE BASE (data/notes.json) ──
+  {
+    name: "criar_nota_kb",
+    description: "Cria uma nota na base de conhecimento do Cerne (data/notes.json). Aceita blocos estruturados ou Markdown simples.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        titulo: { type: "string" },
+        conteudo_md: { type: "string", description: "Markdown livre — convertido em blocos automaticamente" },
+        blocos: { type: "array", description: "Blocos estruturados (alternativa ao conteudo_md)", items: { type: "object" } },
+        tags: { type: "array", items: { type: "string" } },
+        tarefaVinculada: { type: "string", description: "id da tarefa relacionada (opcional)" },
+        fonte: { type: "string", description: "origem da nota: cerne | notion | obsidian (default: cerne)" },
+      },
+      required: ["titulo"],
+    },
+  },
+  {
+    name: "listar_notas_kb",
+    description: "Lista as notas da base de conhecimento, com filtro opcional.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        busca: { type: "string" },
+        tag: { type: "string" },
+        tarefaVinculada: { type: "string" },
+      },
+    },
+  },
+  {
+    name: "editar_nota_kb",
+    description: "Edita título, blocos ou tags de uma nota existente.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        titulo: { type: "string" },
+        conteudo_md: { type: "string", description: "Substitui todos os blocos pelo Markdown fornecido" },
+        blocos: { type: "array", items: { type: "object" } },
+        tags: { type: "array", items: { type: "string" } },
+      },
+      required: ["id"],
+    },
+  },
+  {
+    name: "excluir_nota_kb",
+    description: "Remove uma nota da base de conhecimento.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "importar_do_notion",
+    description: "Busca uma página do Notion e importa como nota na base de conhecimento do Cerne. Requer NOTION_TOKEN.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        pageId: { type: "string", description: "ID ou URL da página do Notion" },
+        tarefaVinculada: { type: "string", description: "id de tarefa para vincular (opcional)" },
+        tags: { type: "array", items: { type: "string" } },
+      },
+      required: ["pageId"],
     },
   },
 ];
@@ -330,6 +397,149 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       return ok(
         `Notion: ${enviadas} página(s) criada(s).` + (erros.length ? ` Erros: ${erros.join("; ")}` : "")
       );
+    }
+
+    // ── KNOWLEDGE BASE ─────────────────────────────────────
+    async function carregarNotes() {
+      if (!existsSync(NOTES_KB_FILE)) return { version: 1, atualizadoEm: new Date().toISOString(), notas: [] };
+      return JSON.parse(await readFile(NOTES_KB_FILE, "utf8"));
+    }
+    async function salvarNotes(db) {
+      db.atualizadoEm = new Date().toISOString();
+      await writeFile(NOTES_KB_FILE, JSON.stringify(db, null, 2) + "\n", "utf8");
+    }
+    function noteNextId(db) {
+      const nums = (db.notas || []).map(n => parseInt((n.id || "").replace("n-", ""), 10)).filter(x => !isNaN(x));
+      return "n-" + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(4, "0");
+    }
+    function blockNextId(nota) {
+      const nums = (nota.blocos || []).map(b => parseInt((b.id || "").replace("b-", ""), 10)).filter(x => !isNaN(x));
+      return "b-" + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(4, "0");
+    }
+    function mdToBlocos(md) {
+      const linhas = md.split("\n");
+      const blocos = [];
+      let codeBuffer = null, codeLinhas = [], codeLang = "";
+      let bIdx = 1;
+      function newId() { return "b-" + String(bIdx++).padStart(4, "0"); }
+      for (const l of linhas) {
+        if (l.startsWith("```")) {
+          if (codeBuffer === null) { codeBuffer = true; codeLang = l.slice(3).trim() || "js"; codeLinhas = []; }
+          else { blocos.push({ id: newId(), tipo: "code", linguagem: codeLang, conteudo: codeLinhas.join("\n") }); codeBuffer = null; }
+          continue;
+        }
+        if (codeBuffer) { codeLinhas.push(l); continue; }
+        if (l.startsWith("# ")) blocos.push({ id: newId(), tipo: "h1", conteudo: l.slice(2) });
+        else if (l.startsWith("## ")) blocos.push({ id: newId(), tipo: "h2", conteudo: l.slice(3) });
+        else if (l.startsWith("### ")) blocos.push({ id: newId(), tipo: "h3", conteudo: l.slice(4) });
+        else if (l.startsWith("> ")) blocos.push({ id: newId(), tipo: "quote", conteudo: l.slice(2) });
+        else if (l.trim() === "---" || l.trim() === "___") blocos.push({ id: newId(), tipo: "divider", conteudo: "" });
+        else if (l.trim()) blocos.push({ id: newId(), tipo: "para", conteudo: l });
+      }
+      return blocos.length ? blocos : [{ id: "b-0001", tipo: "para", conteudo: md }];
+    }
+    function notionBlockToCerne(block) {
+      const rt = (arr) => (arr || []).map(r => r.plain_text || "").join("");
+      const tipo = block.type;
+      if (tipo === "heading_1") return { tipo: "h1", conteudo: rt(block.heading_1?.rich_text) };
+      if (tipo === "heading_2") return { tipo: "h2", conteudo: rt(block.heading_2?.rich_text) };
+      if (tipo === "heading_3") return { tipo: "h3", conteudo: rt(block.heading_3?.rich_text) };
+      if (tipo === "paragraph") return { tipo: "para", conteudo: rt(block.paragraph?.rich_text) };
+      if (tipo === "quote") return { tipo: "quote", conteudo: rt(block.quote?.rich_text) };
+      if (tipo === "code") return { tipo: "code", linguagem: block.code?.language || "plain text", conteudo: rt(block.code?.rich_text) };
+      if (tipo === "divider") return { tipo: "divider", conteudo: "" };
+      if (tipo === "bookmark") return { tipo: "link", conteudo: block.bookmark?.caption?.map(r => r.plain_text).join("") || "", url: block.bookmark?.url || "" };
+      if (tipo === "bulleted_list_item") return { tipo: "para", conteudo: "• " + rt(block.bulleted_list_item?.rich_text) };
+      if (tipo === "numbered_list_item") return { tipo: "para", conteudo: rt(block.numbered_list_item?.rich_text) };
+      return null;
+    }
+
+    if (name === "criar_nota_kb") {
+      const db = await carregarNotes();
+      const blocos = args.blocos?.length ? args.blocos : mdToBlocos(args.conteudo_md || "");
+      let idx = 1;
+      blocos.forEach(b => { if (!b.id) b.id = "b-" + String(idx++).padStart(4, "0"); });
+      const nota = {
+        id: noteNextId(db),
+        titulo: args.titulo,
+        icone: "📄",
+        blocos,
+        tags: args.tags || [],
+        tarefaVinculada: args.tarefaVinculada || null,
+        fonte: args.fonte || "cerne",
+        criadoEm: agora,
+        atualizadoEm: agora,
+      };
+      db.notas.unshift(nota);
+      await salvarNotes(db);
+      return ok(`Nota criada: ${nota.id} — "${nota.titulo}" (${blocos.length} bloco(s))`);
+    }
+
+    if (name === "listar_notas_kb") {
+      const db = await carregarNotes();
+      let ns = db.notas || [];
+      if (args.tag) ns = ns.filter(n => (n.tags || []).includes(args.tag));
+      if (args.tarefaVinculada) ns = ns.filter(n => n.tarefaVinculada === args.tarefaVinculada);
+      if (args.busca) {
+        const q = args.busca.toLowerCase();
+        ns = ns.filter(n => n.titulo.toLowerCase().includes(q) || (n.blocos || []).some(b => (b.conteudo || "").toLowerCase().includes(q)));
+      }
+      if (!ns.length) return ok("Nenhuma nota encontrada.");
+      return ok(ns.map(n => `• [${n.id}] ${n.titulo}${n.tags?.length ? " [" + n.tags.join(", ") + "]" : ""}  (${(n.blocos || []).length} blocos, ${n.fonte || "cerne"})`).join("\n"));
+    }
+
+    if (name === "editar_nota_kb") {
+      const db = await carregarNotes();
+      const nota = (db.notas || []).find(n => n.id === args.id);
+      if (!nota) return ok(`Nota ${args.id} não encontrada.`);
+      if (args.titulo !== undefined) nota.titulo = args.titulo;
+      if (args.tags !== undefined) nota.tags = args.tags;
+      if (args.blocos?.length) nota.blocos = args.blocos;
+      else if (args.conteudo_md) nota.blocos = mdToBlocos(args.conteudo_md);
+      nota.atualizadoEm = agora;
+      await salvarNotes(db);
+      return ok(`Nota ${nota.id} atualizada.`);
+    }
+
+    if (name === "excluir_nota_kb") {
+      const db = await carregarNotes();
+      const antes = (db.notas || []).length;
+      db.notas = (db.notas || []).filter(n => n.id !== args.id);
+      if (db.notas.length === antes) return ok(`Nota ${args.id} não encontrada.`);
+      await salvarNotes(db);
+      return ok(`Nota ${args.id} removida.`);
+    }
+
+    if (name === "importar_do_notion") {
+      if (!NOTION_TOKEN) return ok("NOTION_TOKEN não configurado. Defina a variável de ambiente.");
+      const pageId = args.pageId.replace(/.*notion\.so\/[^-]*-?/,"").replace(/-/g,"").slice(0,32)||args.pageId;
+      const headers = { Authorization: `Bearer ${NOTION_TOKEN}`, "Notion-Version": "2022-06-28" };
+      const pageRes = await fetch(`https://api.notion.com/v1/pages/${pageId}`, { headers });
+      if (!pageRes.ok) return ok(`Erro ao buscar página Notion: HTTP ${pageRes.status}`);
+      const page = await pageRes.json();
+      const titulo = page.properties?.title?.title?.map(r => r.plain_text).join("") ||
+                     page.properties?.Name?.title?.map(r => r.plain_text).join("") || "Nota do Notion";
+      const blocksRes = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`, { headers });
+      const blocksData = blocksRes.ok ? await blocksRes.json() : { results: [] };
+      const blocos = (blocksData.results || []).map(notionBlockToCerne).filter(Boolean);
+      let idx = 1;
+      blocos.forEach(b => { b.id = "b-" + String(idx++).padStart(4, "0"); });
+      const db = await carregarNotes();
+      const nota = {
+        id: noteNextId(db),
+        titulo,
+        icone: "📄",
+        blocos: blocos.length ? blocos : [{ id: "b-0001", tipo: "para", conteudo: "" }],
+        tags: args.tags || ["notion"],
+        tarefaVinculada: args.tarefaVinculada || null,
+        fonte: "notion",
+        notionPageId: pageId,
+        criadoEm: agora,
+        atualizadoEm: agora,
+      };
+      db.notas.unshift(nota);
+      await salvarNotes(db);
+      return ok(`Página do Notion importada: ${nota.id} — "${titulo}" (${blocos.length} bloco(s))`);
     }
 
     return ok(`Ferramenta desconhecida: ${name}`);
