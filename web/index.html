@@ -113,7 +113,7 @@ body{
 .me-av:hover{box-shadow:0 0 0 2px var(--blue)}
 
 /* ── CENTER ─────────────────────────────────── */
-.center{display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.center{display:flex;flex-direction:column;min-width:0;background:var(--bg);overflow:hidden}
 
 /* topbar */
 .topbar{
@@ -308,7 +308,8 @@ body{
 .nb-ta{
   width:100%;background:none;border:none;outline:none;font:inherit;
   font-size:14px;color:var(--ink);line-height:1.6;resize:none;
-  padding:2px 0;transition:color .15s;overflow:hidden;
+  padding:2px 0;transition:color .15s;overflow:hidden;min-height:28px;
+  touch-action:manipulation;
 }
 .nb-ta::placeholder{color:var(--ink-4)}
 .nb-ta.nb-h1{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
@@ -433,7 +434,7 @@ body{
 /* card */
 .card{
   background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:13px;cursor:pointer;
+  padding:13px;cursor:grab;user-select:none;
   transition:transform .2s var(--ease),border-color .18s,box-shadow .2s;
   animation:cardIn .45s var(--ease) both;
 }
@@ -586,8 +587,8 @@ body{
   background:var(--app);border-left:1px solid var(--line-soft);
   display:flex;flex-direction:column;padding:16px 16px 0;overflow:hidden;
 }
-.act-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px}
-.act-head h2{font-size:15px;font-weight:600}
+.act-head{display:flex;align-items:center;margin-bottom:16px;gap:8px}
+.act-head h2{font-size:15px;font-weight:600;flex:1}
 .act-head .bell{
   width:34px;height:34px;border-radius:10px;border:1px solid var(--line);
   background:#0e1117;display:grid;place-items:center;color:var(--ink-2);cursor:pointer;
@@ -692,14 +693,22 @@ body{
   z-index:60;display:none;align-items:center;justify-content:center;padding:20px;
 }
 .scrim.open{display:flex}
+.scrim.closing{display:flex;animation:scrimOut .24s var(--ease) forwards}
+@keyframes scrimOut{to{opacity:0}}
 .modal{
   background:var(--col);border:1px solid var(--line);border-radius:20px;
   width:100%;max-width:460px;max-height:88dvh;overflow-y:auto;padding:24px;
   transform:scale(.93) translateY(12px);opacity:0;
 }
-#scrimTask .modal{max-width:660px;padding:28px 32px}
-.scrim.open .modal{animation:modalIn .38s var(--spring) forwards}
-@keyframes modalIn{to{transform:none;opacity:1}}
+#scrimTask .modal{max-width:640px;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.scrim.open .modal{animation:modalIn .32s var(--spring) forwards}
+.scrim.closing .modal{animation:modalOut .2s var(--ease) forwards}
+@keyframes modalIn{from{transform:scale(.93) translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@keyframes modalOut{to{transform:scale(.97) translateY(6px);opacity:0}}
+@keyframes modalOutDown{to{transform:translateY(100%)}}
+@media(max-width:640px){
+  .scrim.closing .modal{animation:modalOutDown .22s var(--ease) forwards}
+}
 .modal h2{font-size:17px;font-weight:600;margin-bottom:18px;letter-spacing:-.01em}
 .field{margin-bottom:13px}
 .field label{
@@ -735,6 +744,35 @@ body{
 .btn.primary:hover{background:var(--blue-hi)}
 .btn.ghost{background:transparent}
 
+/* ── TASK MODAL redesign ─────────────────────────────── */
+.tm-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--line);flex-shrink:0;gap:10px}
+.tm-badge{font-size:11px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.07em;flex:1}
+.tm-x{width:28px;height:28px;border-radius:8px;border:none;background:var(--bg);cursor:pointer;color:var(--ink-3);display:grid;place-items:center;transition:.15s;flex-shrink:0}
+.tm-x:hover{background:#1b2131;color:var(--ink)}
+.tm-body{flex:1;overflow-y:auto;padding:20px 22px 12px}
+.tm-title-inp{width:100%;font:inherit;font-size:19px;font-weight:700;color:var(--ink);background:none;border:none;outline:none;padding:0 0 14px;letter-spacing:-.02em;line-height:1.25;border-bottom:1px solid var(--line);margin-bottom:16px;display:block}
+.tm-title-inp::placeholder{color:var(--ink-4)}
+.tm-desc-wrap{margin-bottom:14px}
+.tm-divider{height:1px;background:var(--line);margin:6px 0 16px}
+.tm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+.tm-field{margin-bottom:0}
+.tm-mb{margin-bottom:13px}
+.tm-label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-4);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.tm-sel,.tm-inp{width:100%;font:inherit;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;outline:none;transition:.18s;-webkit-appearance:none;appearance:none}
+.tm-sel{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
+.tm-sel:focus,.tm-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,107,255,.14)}
+.tm-prio-row{display:flex;gap:7px}
+.tm-prio-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:10px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink-3);transition:.15s}
+.tm-prio-btn .pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:.15s}
+.tm-prio-btn[data-v="baixa"] .pdot{background:#34d08c}
+.tm-prio-btn[data-v="media"] .pdot{background:#f0a93a}
+.tm-prio-btn[data-v="alta"] .pdot{background:#f0604d}
+.tm-prio-btn.on[data-v="baixa"]{border-color:rgba(52,208,140,.4);color:#34d08c;background:rgba(52,208,140,.09)}
+.tm-prio-btn.on[data-v="media"]{border-color:rgba(240,169,58,.4);color:#f0a93a;background:rgba(240,169,58,.09)}
+.tm-prio-btn.on[data-v="alta"]{border-color:rgba(240,96,77,.4);color:#f0604d;background:rgba(240,96,77,.09)}
+.tm-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 22px max(14px,env(safe-area-inset-bottom,14px));border-top:1px solid var(--line);flex-shrink:0;gap:9px}
+.tm-footer-r{display:flex;gap:8px}
+
 /* ── TOASTS ─────────────────────────────────── */
 .toasts{
   position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:200;
@@ -750,16 +788,6 @@ body{
 .toast-ok{background:#0e2818;border:1px solid #1a4d2e;color:#4ade80}
 .toast-warn{background:#1c1810;border:1px solid #4d3a10;color:#fbbf24}
 .toast-err{background:#1c0e0e;border:1px solid #4d1a1a;color:#f87171}
-
-/* ── TOOLTIP CUSTOMIZADO ────────────────────────── */
-.tip-el{
-  position:fixed;z-index:9999;pointer-events:none;
-  background:#0c0e12;border:1px solid var(--line);color:var(--ink-2);
-  font-size:11.5px;font-weight:500;padding:5px 10px;border-radius:8px;
-  box-shadow:0 4px 14px -4px rgba(0,0,0,.7);white-space:nowrap;
-  transition:opacity .12s;opacity:0;
-}
-.tip-el.show{opacity:1}
 
 /* ── TASK SIDEBAR ───────────────────────────────── */
 .task-sidebar{
@@ -1138,11 +1166,11 @@ body{
   /* ── FAB "Nova tarefa" ── */
   .add{
     position:fixed;bottom:calc(92px + env(safe-area-inset-bottom,0px));right:16px;
-    padding:0;width:54px;height:54px;border-radius:50%;
-    font-size:0;display:flex;align-items:center;justify-content:center;
+    padding:0;width:54px;height:54px;border-radius:18px;
+    font-size:0;gap:0;display:flex;align-items:center;justify-content:center;
     box-shadow:0 4px 24px rgba(47,107,255,.55);z-index:45;
   }
-  .add svg{width:22px;height:22px}
+  .add svg{width:22px;height:22px;display:block}
 
   /* ── Modals (bottom sheet) ── */
   .scrim{align-items:flex-end;padding:0}
@@ -1161,7 +1189,7 @@ body{
   .cfg-nav-btn{padding:7px 11px;white-space:nowrap;flex-shrink:0}
   .cfg-nav-btn svg{display:none}
   .cfg-content{padding:14px 16px 16px}
-  #scrimTask .modal{padding:24px 18px env(safe-area-inset-bottom,16px)}
+  #scrimTask .modal{padding-bottom:0}
 
   /* ── Misc ── */
   .task-sidebar{width:100%;border-radius:24px 24px 0 0}
@@ -1405,50 +1433,75 @@ body{
 <!-- MODAL: TAREFA -->
 <div class="scrim" id="scrimTask">
   <div class="modal">
-    <h2 id="taskModalTitle">New task</h2>
+    <div class="tm-head">
+      <span id="taskModalTitle" class="tm-badge">Nova tarefa</span>
+      <button class="tm-x" id="btnTaskClose" aria-label="Fechar">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
     <input type="hidden" id="f_id"/>
-    <div class="field"><label>Título</label><input id="f_titulo" placeholder="O que precisa ser feito?"/></div>
-    <div class="field">
-      <label>Descrição <span style="color:var(--ink-4);font-weight:400;font-size:10px;text-transform:none">— digite / para blocos</span></label>
-      <div id="f_editor" class="block-editor" contenteditable="true" data-placeholder="Detalhes (opcional)..."></div>
-      <input type="hidden" id="f_descricao"/>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Status</label><select id="f_coluna"></select></div>
-      <div class="field"><label>Label</label><select id="f_etiqueta"></select></div>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Prazo</label><input type="date" id="f_prazo"/></div>
-      <div class="field"><label>Lembrete</label><input type="datetime-local" id="f_lembrete"/></div>
-    </div>
-    <div class="field"><label>Membros</label><div id="f_assignees" class="assignee-row"></div></div>
-    <div class="field"><label>Prioridade</label>
-      <div class="seg" id="f_prioridade">
-        <button data-v="baixa">Baixa</button>
-        <button data-v="media" class="on">Média</button>
-        <button data-v="alta">Alta</button>
+    <div class="tm-body">
+      <input id="f_titulo" class="tm-title-inp" placeholder="O que precisa ser feito?"/>
+      <div class="tm-desc-wrap">
+        <div id="f_editor" class="block-editor" contenteditable="true" data-placeholder="Detalhes (opcional)… digite / para blocos"></div>
+        <input type="hidden" id="f_descricao"/>
+      </div>
+      <div class="tm-divider"></div>
+      <div class="tm-grid2">
+        <div class="tm-field">
+          <label class="tm-label" for="f_coluna">Status</label>
+          <select id="f_coluna" class="tm-sel"></select>
+        </div>
+        <div class="tm-field">
+          <label class="tm-label" for="f_etiqueta">Label</label>
+          <select id="f_etiqueta" class="tm-sel"></select>
+        </div>
+      </div>
+      <div class="tm-grid2">
+        <div class="tm-field">
+          <label class="tm-label" for="f_prazo">Prazo</label>
+          <input type="date" id="f_prazo" class="tm-inp"/>
+        </div>
+        <div class="tm-field">
+          <label class="tm-label" for="f_lembrete">Lembrete</label>
+          <input type="datetime-local" id="f_lembrete" class="tm-inp"/>
+        </div>
+      </div>
+      <div class="tm-field tm-mb">
+        <label class="tm-label">Membros</label>
+        <div id="f_assignees" class="assignee-row"></div>
+      </div>
+      <div class="tm-field tm-mb">
+        <label class="tm-label">Prioridade</label>
+        <div class="tm-prio-row" id="f_prioridade">
+          <button class="tm-prio-btn" data-v="baixa"><span class="pdot"></span>Baixa</button>
+          <button class="tm-prio-btn on" data-v="media"><span class="pdot"></span>Média</button>
+          <button class="tm-prio-btn" data-v="alta"><span class="pdot"></span>Alta</button>
+        </div>
+      </div>
+      <div class="tm-field tm-mb">
+        <div class="anexos-header" id="btnToggleAnexos">
+          <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 12.5 12.5 21a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg>
+          <span>Anexos</span>
+          <span id="anexosBadge" class="anexos-badge" hidden></span>
+          <svg class="chevron-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="anexos-body" id="anexosBody" hidden>
+          <div id="f_anexos_list" class="anexos-list"></div>
+          <label class="file-upload-label" for="f_file_input">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            Soltar arquivos ou clicar para enviar
+            <input type="file" id="f_file_input" multiple style="display:none"/>
+          </label>
+        </div>
       </div>
     </div>
-    <div class="field anexos-field">
-      <div class="anexos-header" id="btnToggleAnexos">
-        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 12.5 12.5 21a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a2 2 0 0 1-3-3l8-8"/></svg>
-        <span>Anexos</span>
-        <span id="anexosBadge" class="anexos-badge" hidden></span>
-        <svg class="chevron-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-      </div>
-      <div class="anexos-body" id="anexosBody" hidden>
-        <div id="f_anexos_list" class="anexos-list"></div>
-        <label class="file-upload-label" for="f_file_input">
-          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-          Soltar arquivos ou clicar para enviar
-          <input type="file" id="f_file_input" multiple style="display:none"/>
-        </label>
-      </div>
-    </div>
-    <div class="modal-actions">
+    <div class="tm-footer">
       <button class="btn danger" id="btnDelete" hidden>Excluir</button>
-      <button class="btn ghost" id="btnCancelTask">Cancelar</button>
-      <button class="btn primary" id="btnSaveTask">Salvar tarefa</button>
+      <div class="tm-footer-r">
+        <button class="btn ghost" id="btnCancelTask">Cancelar</button>
+        <button class="btn primary" id="btnSaveTask">Salvar tarefa</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1619,9 +1672,6 @@ body{
   <div class="block-menu-item" data-block="code"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg> Código <span>```</span></div>
 </div>
 
-<!-- TOOLTIP -->
-<div id="tipEl" class="tip-el"></div>
-
 <!-- TOASTS -->
 <div class="toasts" id="toasts"></div>
 
@@ -1646,6 +1696,8 @@ const LANGS={
     settings:'Configurações',addMember:'+ Adicionar membro',
     notesEmpty:'Selecione ou crie uma nota',newNote:'Nova nota',
     cfgGeneral:'Geral',cfgColumns:'Colunas',cfgMembers:'Membros',cfgNotif:'Notificações',cfgSounds:'Sons',
+    myActivity:'Minha Atividade',workingTime:'Tempo de Trabalho',inbox:'Inbox',today:'Hoje',timeTracking:'Cronômetro',
+    wkDays:'Dom,Seg,Ter,Qua,Qui,Sex,Sáb',
   },
   'en':{
     addTask:'Add task',search:'Search tasks…',filters:'Filters',me:'Me',showDone:'Show done',
@@ -1657,6 +1709,8 @@ const LANGS={
     settings:'Settings',addMember:'+ Add member',
     notesEmpty:'Select or create a note',newNote:'New note',
     cfgGeneral:'General',cfgColumns:'Columns',cfgMembers:'Members',cfgNotif:'Notifications',cfgSounds:'Sounds',
+    myActivity:'My Activity',workingTime:'Working Time',inbox:'Inbox',today:'Today',timeTracking:'Time tracking',
+    wkDays:'Sun,Mon,Tue,Wed,Thu,Fri,Sat',
   },
   'es':{
     addTask:'Nueva tarea',search:'Buscar tareas…',filters:'Filtros',me:'Yo',showDone:'Mostrar hechas',
@@ -1668,6 +1722,8 @@ const LANGS={
     settings:'Configuración',addMember:'+ Agregar miembro',
     notesEmpty:'Selecciona o crea una nota',newNote:'Nueva nota',
     cfgGeneral:'General',cfgColumns:'Columnas',cfgMembers:'Miembros',cfgNotif:'Notificaciones',cfgSounds:'Sonidos',
+    myActivity:'Mi Actividad',workingTime:'Tiempo de trabajo',inbox:'Bandeja',today:'Hoy',timeTracking:'Temporizador',
+    wkDays:'Dom,Lun,Mar,Mié,Jue,Vie,Sáb',
   },
 };
 function i18n(k){return(LANGS[lang]||LANGS['pt-BR'])[k]||k}
@@ -1703,6 +1759,18 @@ function applyLang(){
   // notes empty label
   const ne=document.getElementById('nvEmpty');if(ne){const p=ne.querySelector('p');if(p)p.textContent=i18n('notesEmpty');}
   const bn=document.getElementById('btnNewNote2');if(bn)bn.textContent=i18n('newNote');
+  // activity panel
+  const agh=document.querySelector('#actHeadGlobal h2');if(agh)agh.textContent=i18n('myActivity');
+  const inTaskMode=document.getElementById('actHeadTask')&&!document.getElementById('actHeadTask').hidden;
+  if(!inTaskMode){
+    const ahl=document.getElementById('actHeatLabel');if(ahl)ahl.textContent=i18n('workingTime');
+    const afl=document.getElementById('actFeedLabel');if(afl)afl.textContent=i18n('inbox');
+    const tl=document.getElementById('timerLabel');if(tl)tl.textContent=i18n('timeTracking');
+  }
+  const afw=document.getElementById('actFeedWhen');if(afw){const svg=afw.querySelector('svg');afw.textContent=i18n('today')+' ';if(svg)afw.appendChild(svg);}
+  // weekday labels
+  const wkEls=document.querySelectorAll('.heat-wk span');const wkDays=i18n('wkDays').split(',');
+  wkEls.forEach((el,i)=>{if(wkDays[i])el.textContent=wkDays[i];});
 }
 
 /* ─── HELPERS ─────────────────────────────────────────── */
@@ -1902,7 +1970,7 @@ function cardHTML(t,i){
 let _ckTimer=null,_ckId=null;
 function wireDnD(){
   document.querySelectorAll('.card').forEach(c=>{
-    c.addEventListener('dragstart',e=>{dragId=c.dataset.id;c.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    c.addEventListener('dragstart',e=>{dragId=c.dataset.id;e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move';c.classList.add('dragging');});
     c.addEventListener('dragend',()=>c.classList.remove('dragging'));
     c.addEventListener('click',e=>{
       if(e.detail>=2)return; // deixa o dblclick nativo lidar
@@ -2078,7 +2146,8 @@ document.getElementById('meAvMob').addEventListener('click',()=>{
   document.getElementById('btnMe').click();
 });
 /* Painel direito (activity) como overlay no mobile */
-document.getElementById('btnActivityMob')?.addEventListener('click',()=>{
+document.getElementById('btnActivityMob')?.addEventListener('click',e=>{
+  e.stopPropagation();
   document.body.classList.add('activity-mob-open');
 });
 // Fechar overlay ao clicar no "X" da activity ou no scrim
@@ -2154,7 +2223,7 @@ function openTask(id,colDef){
   const ah=document.getElementById('btnToggleAnexos');
   ab.setAttribute('hidden','');ah.classList.remove('open');
   document.querySelectorAll('#f_prioridade button').forEach(b=>b.classList.toggle('on',b.dataset.v===curPrio));
-  scrimTask.classList.add('open');
+  scrimTask.classList.remove('closing');scrimTask.classList.add('open');
   setTimeout(()=>document.getElementById('f_titulo').focus(),180);
 }
 document.querySelectorAll('#f_prioridade button').forEach(b=>b.addEventListener('click',()=>{
@@ -2195,6 +2264,7 @@ document.getElementById('btnDelete').addEventListener('click',()=>{
 });
 document.getElementById('btnNew').addEventListener('click',()=>openTask(null,'todo'));
 document.getElementById('btnCancelTask').addEventListener('click',closeAll);
+document.getElementById('btnTaskClose').addEventListener('click',closeAll);
 
 /* ─── ANEXOS TOGGLE ───────────────────────────────────── */
 document.getElementById('btnToggleAnexos').addEventListener('click',()=>{
@@ -2264,7 +2334,7 @@ document.getElementById('btnSettings').addEventListener('click',()=>{
   // Reset para seção Geral
   document.querySelectorAll('.cfg-nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.cfg==='geral'));
   document.querySelectorAll('.cfg-section').forEach(s=>s.classList.toggle('on',s.id==='cfgGeral'));
-  scrimCfg.classList.add('open');
+  scrimCfg.classList.remove('closing');scrimCfg.classList.add('open');
 });
 
 function buildColunasEditor(){
@@ -2348,10 +2418,11 @@ document.getElementById('btnSaveCfg').addEventListener('click',()=>{
 
 /* ─── CLOSE ───────────────────────────────────────────── */
 function closeAll(){
-  scrimTask.classList.remove('open');
-  scrimCfg.classList.remove('open');
-  document.getElementById('scrimNotif').classList.remove('open');
-  document.getElementById('scrimComments').classList.remove('open');
+  [scrimTask,scrimCfg,document.getElementById('scrimNotif'),document.getElementById('scrimComments')].forEach(s=>{
+    if(!s||!s.classList.contains('open'))return;
+    s.classList.add('closing');
+    setTimeout(()=>s.classList.remove('open','closing'),260);
+  });
 }
 [scrimTask,scrimCfg,document.getElementById('scrimNotif'),document.getElementById('scrimComments')].forEach(s=>s.addEventListener('click',e=>{if(e.target===s)closeAll();}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAll();closeTaskSidebar();}});
@@ -2365,7 +2436,7 @@ function openCommentModal(id){
   document.getElementById('cmModalTitle').textContent=`Comentários — ${esc(t.titulo)}`;
   renderCmList(t);
   document.getElementById('cmInput').value='';
-  document.getElementById('scrimComments').classList.add('open');
+  const sc=document.getElementById('scrimComments');sc.classList.remove('closing');sc.classList.add('open');
   setTimeout(()=>document.getElementById('cmInput').focus(),200);
 }
 function renderCmList(t){
@@ -2502,23 +2573,7 @@ function playSound(type,force=false){
   }catch(e){}
 }
 
-/* ─── TOOLTIPS ────────────────────────────────────────── */
-function initTooltips(){
-  const tip=document.getElementById('tipEl');
-  document.addEventListener('mouseover',e=>{
-    const el=e.target.closest('[data-tip]');
-    if(!el)return;
-    tip.textContent=el.dataset.tip;
-    tip.classList.add('show');
-  });
-  document.addEventListener('mousemove',e=>{
-    tip.style.left=(e.clientX+12)+'px';
-    tip.style.top=(e.clientY-28)+'px';
-  });
-  document.addEventListener('mouseout',e=>{
-    if(!e.target.closest('[data-tip]'))tip.classList.remove('show');
-  });
-}
+
 
 /* ─── ASSIGNEE PICKER ─────────────────────────────────── */
 function buildAssigneePicker(current){
@@ -2545,7 +2600,7 @@ function openTaskSidebar(id){
   document.getElementById('actHeadTask').hidden=false;
   document.getElementById('actTaskTitle').textContent=t.titulo;
   /* heatmap da tarefa (7 dias) */
-  document.getElementById('actHeatLabel').textContent='Working Time — tarefa';
+  document.getElementById('actHeatLabel').textContent=i18n('workingTime')+' — tarefa';
   renderActHeat(t);
   /* feed de comentários da tarefa */
   document.getElementById('actFeedLabel').textContent='Comentários';
@@ -2564,11 +2619,11 @@ function closeTaskSidebar(){
   sbTaskId=null;_actTaskMode=false;
   document.getElementById('actHeadGlobal').hidden=false;
   document.getElementById('actHeadTask').hidden=true;
-  document.getElementById('actHeatLabel').textContent='Working Time';
-  document.getElementById('actFeedLabel').textContent='Inbox';
+  document.getElementById('actHeatLabel').textContent=i18n('workingTime');
+  document.getElementById('actFeedLabel').textContent=i18n('inbox');
   document.getElementById('actFeedWhen').hidden=false;
   document.getElementById('actCommentAdd').hidden=true;
-  document.getElementById('timerLabel').textContent='Time tracking';
+  document.getElementById('timerLabel').textContent=i18n('timeTracking');
   renderActivity();
 }
 
@@ -2705,7 +2760,7 @@ function openNotifModal(){
     html='<div style="text-align:center;padding:20px 0;color:var(--ink-3);font-size:13px">Nenhuma notificação pendente.</div>';
   }
   document.getElementById('notifContent').innerHTML=html;
-  document.getElementById('scrimNotif').classList.add('open');
+  const sn=document.getElementById('scrimNotif');sn.classList.remove('closing');sn.classList.add('open');
 }
 
 /* ─── REPORTS ─────────────────────────────────────────── */
@@ -3024,8 +3079,7 @@ function openNote(id){
     document.getElementById('nvSidebar').hidden=true;
     document.getElementById('nvEditorPanel').hidden=false;
   }
-  renderBlocks(nota);
-  renderNotesList();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{renderBlocks(nota);renderNotesList();}));
 }
 
 function renderNoteTags(nota){
@@ -3042,6 +3096,7 @@ function renderBlocks(nota){
   const blocos=nota.blocos||[];
   if(!blocos.length){const b={id:'b-0001',tipo:'para',conteudo:''};nota.blocos=[b];}
   (nota.blocos||[]).forEach(b=>area.appendChild(makeBlockEl(b,nota)));
+  area.querySelectorAll('.nb-ta').forEach(autoResizeTA);
 }
 
 function makeBlockEl(bloco,nota){
@@ -3076,7 +3131,7 @@ function makeBlockEl(bloco,nota){
   return div;
 }
 
-function autoResizeTA(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
+function autoResizeTA(ta){ta.style.height='auto';ta.style.height=Math.max(ta.scrollHeight,28)+'px';}
 function saveBlock(bid,nota){
   const b=(nota.blocos||[]).find(x=>x.id===bid);
   const ta=document.querySelector(`.nb-ta[data-bid="${bid}"]`);
@@ -3199,7 +3254,6 @@ async function boot(){
   setupNotifications();
 }
 (async()=>{
-  initTooltips();
   applyLang();
   const ok=await checkAuth();
   if(ok){await boot();}
