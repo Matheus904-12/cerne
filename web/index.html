@@ -290,6 +290,10 @@ body{
   padding:3px 9px;border-radius:6px;transition:.15s;
 }
 .nv-add-tag-btn:hover{border-color:#2a313d;color:var(--ink-3)}
+.tag-pop{display:flex;align-items:center;gap:6px;background:var(--col);border:1px solid var(--line);border-radius:10px;padding:5px 8px;box-shadow:0 6px 20px rgba(0,0,0,.45);}
+.tag-pop-inp{font:inherit;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 10px;color:var(--ink);outline:none;width:130px;min-width:0;}
+.tag-pop-inp:focus{border-color:var(--blue)}
+.tag-pop-ok{font:inherit;font-size:12px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
 /* ── Blocks ── */
 .nb-blocks{flex:1;overflow-y:auto;padding:12px 20px 0;display:flex;flex-direction:column;gap:2px}
@@ -706,6 +710,7 @@ body{
 @keyframes modalIn{from{transform:scale(.93) translateY(12px);opacity:0}to{transform:none;opacity:1}}
 @keyframes modalOut{to{transform:scale(.97) translateY(6px);opacity:0}}
 @keyframes modalOutDown{to{transform:translateY(100%)}}
+@keyframes modalInUp{from{transform:translateY(100%);opacity:1}to{transform:translateY(0);opacity:1}}
 @media(max-width:640px){
   .scrim.closing .modal{animation:modalOutDown .22s var(--ease) forwards}
 }
@@ -1189,7 +1194,21 @@ body{
   .cfg-nav-btn{padding:7px 11px;white-space:nowrap;flex-shrink:0}
   .cfg-nav-btn svg{display:none}
   .cfg-content{padding:14px 16px 16px}
-  #scrimTask .modal{padding-bottom:0}
+  /* ── Task modal: bottom sheet com slide-up ── */
+  #scrimTask .modal{
+    max-height:92dvh;
+    border-radius:20px 20px 0 0;
+    transform:translateY(100%);
+    opacity:1;
+    padding-bottom:0;
+  }
+  #scrimTask.open .modal{animation:modalInUp .32s var(--spring) forwards}
+  #scrimTask.closing .modal{animation:modalOutDown .22s var(--ease) forwards}
+  .tm-grid2{grid-template-columns:1fr}
+  .tm-title-inp{font-size:16px}
+  .tm-body{padding:14px 16px 10px}
+  .tm-head{padding:12px 16px 10px}
+  .tm-footer{padding:12px 16px max(16px,env(safe-area-inset-bottom,16px))}
 
   /* ── Misc ── */
   .task-sidebar{width:100%;border-radius:24px 24px 0 0}
@@ -1371,6 +1390,10 @@ body{
           <div class="nv-meta-row" id="nvMetaRow">
             <div class="nv-tags-wrap" id="nvTagsWrap"></div>
             <button class="nv-add-tag-btn" id="nvAddTagBtn">+ tag</button>
+            <div class="tag-pop" id="tagPop" hidden>
+              <input class="tag-pop-inp" id="tagPopInp" placeholder="Nome da tag…" maxlength="32"/>
+              <button class="tag-pop-ok" id="tagPopOk">Salvar</button>
+            </div>
           </div>
           <div class="nb-blocks" id="nvBlocks"></div>
           <div class="nv-add-block-row">
@@ -1869,7 +1892,14 @@ async function pull(){
   try{
     const r=await fetch('/api/board',{headers:AUTH_TOKEN?{Authorization:`Bearer ${AUTH_TOKEN}`}:{}});
     if(r.status===401){showLogin();return;}
-    if(r.ok){DB=await r.json();localStorage.setItem(LS_DB,JSON.stringify(DB));render();renderActivity();return;}
+    if(r.ok){
+      const remote=await r.json();
+      const local=JSON.parse(localStorage.getItem(LS_DB)||'null');
+      const rT=remote?.board?.atualizadoEm||'';
+      const lT=local?.board?.atualizadoEm||'';
+      DB=(lT>rT)?local:remote;
+      localStorage.setItem(LS_DB,JSON.stringify(DB));render();renderActivity();return;
+    }
   }catch(e){}
   DB=JSON.parse(localStorage.getItem(LS_DB))||structuredClone(DEFAULT_DB);
   render();renderActivity();
@@ -2506,17 +2536,27 @@ function renderActivity(){
   const bub=document.getElementById('heatBubble');
   const hh=Math.floor(total/3600),mm=Math.floor((total%3600)/60);
   bub.textContent=hh?`${hh}h ${mm}m`:`${mm}m`;
-  // feed
+  // feed — real comments from tasks
   const feed=document.getElementById('feed');
-  feed.innerHTML=(DB?.atividade||[]).map((a,i)=>{
-    const p=a.pessoa==='system'?{nome:'SY',cor:'#2a3340'}:person(a.pessoa);
-    const av=a.pessoa==='system'
-      ?`<span class="av" style="background:#1a2030"><svg fill="none" stroke="#9aa3b2" stroke-width="1.8" viewBox="0 0 24 24" width="14" height="14"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></span>`
-      :`<span class="av" style="background:${p.cor}">${initials(p.nome)}</span>`;
-    return`<div class="fi" style="animation-delay:${.08+i*.05}s">${av}
-      <div class="body"><div class="top"><span class="nm">${a.pessoa==='system'?'System':esc(p.nome)}</span><span class="tm">${a.hora||''}</span></div>
-      <div class="tx">${esc(a.acao)} <b>${esc(a.alvo)}</b> ${esc(a.extra||'')}</div></div></div>`;
-  }).join('');
+  const allComments=[];
+  (DB.tarefas||[]).forEach(t=>{
+    (t.comentarios||[]).forEach(c=>{
+      allComments.push({tarefa:t.titulo||'Tarefa',pessoa:c.pessoa||'me',texto:c.texto||'',hora:c.criadoEm||''});
+    });
+  });
+  allComments.sort((a,b)=>b.hora.localeCompare(a.hora));
+  if(!allComments.length){
+    feed.innerHTML='<p style="color:var(--ink-4);font-size:12.5px;text-align:center;padding:24px 0;line-height:1.5">Nenhum comentário ainda.<br>Adicione comentários nas tarefas.</p>';
+  }else{
+    feed.innerHTML=allComments.slice(0,30).map((c,i)=>{
+      const p=person(c.pessoa)||{nome:c.pessoa,cor:'#2a3340'};
+      const av=`<span class="av" style="background:${p.cor}">${initials(p.nome)}</span>`;
+      const dt=c.hora?new Date(c.hora).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
+      return`<div class="fi" style="animation-delay:${.08+i*.05}s">${av}
+        <div class="body"><div class="top"><span class="nm">${esc(p.nome)}</span><span class="tm">${dt}</span></div>
+        <div class="tx">${esc(c.texto)} — <b>${esc(c.tarefa)}</b></div></div></div>`;
+    }).join('');
+  }
 }
 
 /* ─── TIMER ───────────────────────────────────────────── */
@@ -3234,9 +3274,26 @@ document.getElementById('nvBackBtn')?.addEventListener('click',()=>{
   document.getElementById('nvEditorPanel').hidden=true;
 });
 document.getElementById('nvAddTagBtn')?.addEventListener('click',()=>{
+  const pop=document.getElementById('tagPop');
+  pop.hidden=!pop.hidden;
+  if(!pop.hidden)setTimeout(()=>document.getElementById('tagPopInp').focus(),20);
+});
+function saveTag(){
   const n=currentNota();if(!n)return;
-  const tag=prompt('Nome da tag:');if(!tag?.trim())return;
-  n.tags=[...(n.tags||[]),tag.trim()];pushNotes(true);renderNoteTags(n);renderNotesList();
+  const inp=document.getElementById('tagPopInp');
+  const tag=inp.value.trim();if(!tag)return;
+  n.tags=[...(n.tags||[]),tag];pushNotes(true);renderNoteTags(n);renderNotesList();
+  inp.value='';document.getElementById('tagPop').hidden=true;
+}
+document.getElementById('tagPopOk')?.addEventListener('click',saveTag);
+document.getElementById('tagPopInp')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();saveTag();}
+  if(e.key==='Escape')document.getElementById('tagPop').hidden=true;
+});
+document.addEventListener('click',e=>{
+  const pop=document.getElementById('tagPop');
+  if(!pop||pop.hidden)return;
+  if(!pop.contains(e.target)&&e.target.id!=='nvAddTagBtn')pop.hidden=true;
 });
 document.getElementById('nvAddBlockBtn')?.addEventListener('click',()=>{
   const n=currentNota();if(!n)return;
