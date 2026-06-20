@@ -113,7 +113,7 @@ body{
 .me-av:hover{box-shadow:0 0 0 2px var(--blue)}
 
 /* ── CENTER ─────────────────────────────────── */
-.center{display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.center{display:flex;flex-direction:column;min-width:0;background:var(--bg);overflow:hidden}
 
 /* topbar */
 .topbar{
@@ -693,14 +693,22 @@ body{
   z-index:60;display:none;align-items:center;justify-content:center;padding:20px;
 }
 .scrim.open{display:flex}
+.scrim.closing{display:flex;animation:scrimOut .24s var(--ease) forwards}
+@keyframes scrimOut{to{opacity:0}}
 .modal{
   background:var(--col);border:1px solid var(--line);border-radius:20px;
   width:100%;max-width:460px;max-height:88dvh;overflow-y:auto;padding:24px;
   transform:scale(.93) translateY(12px);opacity:0;
 }
 #scrimTask .modal{max-width:640px;padding:0;display:flex;flex-direction:column;overflow:hidden}
-.scrim.open .modal{animation:modalIn .38s var(--spring) forwards}
-@keyframes modalIn{to{transform:none;opacity:1}}
+.scrim.open .modal{animation:modalIn .32s var(--spring) forwards}
+.scrim.closing .modal{animation:modalOut .2s var(--ease) forwards}
+@keyframes modalIn{from{transform:scale(.93) translateY(12px);opacity:0}to{transform:none;opacity:1}}
+@keyframes modalOut{to{transform:scale(.97) translateY(6px);opacity:0}}
+@keyframes modalOutDown{to{transform:translateY(100%)}}
+@media(max-width:640px){
+  .scrim.closing .modal{animation:modalOutDown .22s var(--ease) forwards}
+}
 .modal h2{font-size:17px;font-weight:600;margin-bottom:18px;letter-spacing:-.01em}
 .field{margin-bottom:13px}
 .field label{
@@ -1158,7 +1166,7 @@ body{
   /* ── FAB "Nova tarefa" ── */
   .add{
     position:fixed;bottom:calc(92px + env(safe-area-inset-bottom,0px));right:16px;
-    padding:0;width:54px;height:54px;border-radius:50%;
+    padding:0;width:54px;height:54px;border-radius:18px;
     font-size:0;gap:0;display:flex;align-items:center;justify-content:center;
     box-shadow:0 4px 24px rgba(47,107,255,.55);z-index:45;
   }
@@ -2215,7 +2223,7 @@ function openTask(id,colDef){
   const ah=document.getElementById('btnToggleAnexos');
   ab.setAttribute('hidden','');ah.classList.remove('open');
   document.querySelectorAll('#f_prioridade button').forEach(b=>b.classList.toggle('on',b.dataset.v===curPrio));
-  scrimTask.classList.add('open');
+  scrimTask.classList.remove('closing');scrimTask.classList.add('open');
   setTimeout(()=>document.getElementById('f_titulo').focus(),180);
 }
 document.querySelectorAll('#f_prioridade button').forEach(b=>b.addEventListener('click',()=>{
@@ -2326,7 +2334,7 @@ document.getElementById('btnSettings').addEventListener('click',()=>{
   // Reset para seção Geral
   document.querySelectorAll('.cfg-nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.cfg==='geral'));
   document.querySelectorAll('.cfg-section').forEach(s=>s.classList.toggle('on',s.id==='cfgGeral'));
-  scrimCfg.classList.add('open');
+  scrimCfg.classList.remove('closing');scrimCfg.classList.add('open');
 });
 
 function buildColunasEditor(){
@@ -2410,10 +2418,11 @@ document.getElementById('btnSaveCfg').addEventListener('click',()=>{
 
 /* ─── CLOSE ───────────────────────────────────────────── */
 function closeAll(){
-  scrimTask.classList.remove('open');
-  scrimCfg.classList.remove('open');
-  document.getElementById('scrimNotif').classList.remove('open');
-  document.getElementById('scrimComments').classList.remove('open');
+  [scrimTask,scrimCfg,document.getElementById('scrimNotif'),document.getElementById('scrimComments')].forEach(s=>{
+    if(!s||!s.classList.contains('open'))return;
+    s.classList.add('closing');
+    setTimeout(()=>s.classList.remove('open','closing'),260);
+  });
 }
 [scrimTask,scrimCfg,document.getElementById('scrimNotif'),document.getElementById('scrimComments')].forEach(s=>s.addEventListener('click',e=>{if(e.target===s)closeAll();}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAll();closeTaskSidebar();}});
@@ -2427,7 +2436,7 @@ function openCommentModal(id){
   document.getElementById('cmModalTitle').textContent=`Comentários — ${esc(t.titulo)}`;
   renderCmList(t);
   document.getElementById('cmInput').value='';
-  document.getElementById('scrimComments').classList.add('open');
+  const sc=document.getElementById('scrimComments');sc.classList.remove('closing');sc.classList.add('open');
   setTimeout(()=>document.getElementById('cmInput').focus(),200);
 }
 function renderCmList(t){
@@ -2751,7 +2760,7 @@ function openNotifModal(){
     html='<div style="text-align:center;padding:20px 0;color:var(--ink-3);font-size:13px">Nenhuma notificação pendente.</div>';
   }
   document.getElementById('notifContent').innerHTML=html;
-  document.getElementById('scrimNotif').classList.add('open');
+  const sn=document.getElementById('scrimNotif');sn.classList.remove('closing');sn.classList.add('open');
 }
 
 /* ─── REPORTS ─────────────────────────────────────────── */
@@ -3070,7 +3079,7 @@ function openNote(id){
     document.getElementById('nvSidebar').hidden=true;
     document.getElementById('nvEditorPanel').hidden=false;
   }
-  requestAnimationFrame(()=>{renderBlocks(nota);renderNotesList();});
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{renderBlocks(nota);renderNotesList();}));
 }
 
 function renderNoteTags(nota){
@@ -3087,6 +3096,7 @@ function renderBlocks(nota){
   const blocos=nota.blocos||[];
   if(!blocos.length){const b={id:'b-0001',tipo:'para',conteudo:''};nota.blocos=[b];}
   (nota.blocos||[]).forEach(b=>area.appendChild(makeBlockEl(b,nota)));
+  area.querySelectorAll('.nb-ta').forEach(autoResizeTA);
 }
 
 function makeBlockEl(bloco,nota){
